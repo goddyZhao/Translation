@@ -150,6 +150,47 @@ alert(window[aKey]); // indirectly, with dynamic property name: "test"</code></p
   arguments: <ArgO>
 };</code></pre>
 
-_Arguments_对象是活跃对象上的属性，它包含了如下属性：
+_Arguments_对象是活跃对象上的属性，它包含了如下属性：  
+
 *  _callee_ —— 对当前函数的引用  
-*  _length_ —— 
+*  _length_ —— 实参的个数  
+*  _properties-indexes(数字，转换成字符串)_其值是函数参数的值（参数列表中，从左到右）。properties-indexes的个数 == arguments.length;  
+arguments对象的properties-indexes的值和当前（实际传递的）形参是共享的。
+
+如下所示：<br/>
+<pre><code>function foo(x, y, z) {
+ 
+  // 定义的函数参数（x,y,z）的个数
+  alert(foo.length); // 3
+ 
+  // 实际传递的参数个数
+  alert(arguments.length); // 2
+ 
+  // 引用函数自身
+  alert(arguments.callee === foo); // true
+ 
+  // 参数互相共享
+ 
+  alert(x === arguments[0]); // true
+  alert(x); // 10
+ 
+  arguments[0] = 20;
+  alert(x); // 20
+ 
+  x = 30;
+  alert(arguments[0]); // 30
+ 
+  // 然而，对于没有传递的参数z，
+  // 相关的arguments对象的index-property是不共享的
+ 
+  z = 40;
+  alert(arguments[2]); // undefined
+ 
+  arguments[2] = 50;
+  alert(z); // 40
+ 
+}
+ 
+foo(10, 20);</code></pre>
+
+上述例子，在当前的Google Chrome浏览器中有个bug——参数z和arguments[2]也是互相共享的。
