@@ -107,4 +107,14 @@ VO(test functionContext) = {
 首先，有必要对_全局对象（Global object）_作个定义。
 >  全局对象是一个在进入任何执行上下文前就创建出来的对象；此对象以单例形式存在；它的属性在程序任何地方都可以直接访问，其生命周期随着程序的结束而终止。
 
+全局对象在创建的时候，诸如Math,String,Date,parseInt等等属性也会被初始化，同时，其中一些对象会指向全局对象本身——比如，DOM中，全局对象上的_window_属性就指向了全局对象（但是，并非所有的实现都是如此）：
+<pre><code>global = {
+  Math: <...>,
+  String: <...>
+  ...
+  ...
+  window: global
+};</code></pre>
+
+
 
