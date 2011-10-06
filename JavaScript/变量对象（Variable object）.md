@@ -116,5 +116,40 @@ VO(test functionContext) = {
   window: global
 };</code></pre>
 
+在引用全局对象的属性时，前缀通常可以省略，因为全局对象是不能通过名字直接访问的。然而，通过全局对象上的_this_值，以及通过如DOM中的window对象这样递归引用的方式都可以访问到全局对象：
+<pre><code>String(10); // 等同于 global.String(10);
+ 
+// 带前缀
+window.a = 10; // === global.window.a = 10 === global.a = 10;
+this.b = 20; // global.b = 20;</code></pre>
+
+回到全局上下文的变量对象上——这里变量对象就是全局对象本身：
+<pre><code>VO(globalContext) === global;</code></pre>
+
+准确地理解这个事实是非常必要的：正是由于这个原因，当在全局上下文中申明一个变量时，可以通过全局对象上的属性来间地引用该变量（比方说，当变量名提前未知的情况下）
+<pre><code>var a = new String('test');
+ 
+alert(a); // directly, is found in VO(globalContext): "test"
+ 
+alert(window['a']); // indirectly via global === VO(globalContext): "test"
+alert(a === this.a); // true
+ 
+var aKey = 'a';
+alert(window[aKey]); // indirectly, with dynamic property name: "test"</code></pre>
 
 
+函数上下文中的变量对象
+--------
+* * *
+在函数的执行上下文中，VO是不能直接访问的。它主要扮演被称作_活跃对象（activation object）_（简称：AO）的角色。
+<pre><code>VO(functionContext) === AO;</code></pre>
+
+>  活跃对象会在进入函数上下文的时候创建出来，初始化的时候会创建一个_arguments_属性，其值就是_Arguments_对象：  
+
+<pre><code>AO = {
+  arguments: <ArgO>
+};</code></pre>
+
+_Arguments_对象是活跃对象上的属性，它包含了如下属性：
+*  _callee_ —— 对当前函数的引用  
+*  _length_ —— 
