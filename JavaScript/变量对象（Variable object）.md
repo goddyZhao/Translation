@@ -219,4 +219,210 @@ foo(10, 20);</code></pre>
 *  函数申明（_FunctionDeclaration_, FD）
    —— 变量对象的一个属性，其属性名和值都是函数对象创建出来的；如果变量对象已经包含了相同名字的属性，则替换它的值
 *  变量申明（_var_，_VariableDeclaration_）
-   —— 变量对象的一个属性，其属性名即为变量名，其值为_undefined_
+   —— 变量对象的一个属性，其属性名即为变量名，其值为_undefined_;如果变量名和已经申明的函数名或者函数的参数名相同，则不会影响已经存在的属性。  
+
+看下面这个例子：  
+<pre><code>function test(a, b) {
+  var c = 10;
+  function d() {}
+  var e = function _e() {};
+  (function x() {});
+}
+ 
+test(10); // call</code></pre>
+
+当以10为参数进入“test”函数上下文的时候，对应的AO如下所示：  
+<pre><code>AO(test) = {
+  a: 10,
+  b: undefined,
+  c: undefined,
+  d: &lt;reference to FunctionDeclaration "d"&gt;
+  e: undefined
+};</code></pre>
+
+注意了，上面的AO并不包含函数“x”。这是因为这里的“x”并不是函数申明而是_函数表达式_（_FunctionExpression_，简称FE），函数表达式不会对VO造成影响。
+尽管函数“_e”也是函数表达式，然而，正如我们所看到的，由于它被赋值给了变量“e”，因此它可以通过“e”来访问到。关于函数申明和函数表达式的区别会在第五章——函数作具体介绍。  
+
+至此，处理上下文代码的第一阶段介绍完了，接下来介绍第二阶段——_执行代码_阶段。
+
+
+执行代码
+--------
+* * *
+此时，AO/VO的属性已经填充好了。（尽管，大部分属性都还没有赋予真正的值，都只是初始化时候的_undefined_值）。  
+
+继续以上一例子为例，到了执行代码阶段，AO/VO就会修改成为如下形式：  
+<pre><code>AO['c'] = 10;
+AO['e'] = <reference to FunctionExpression "_e">;</code></pre>
+
+再次注意到，这里函数表达式“_e”仍在内存中，这是因为它被保存在申明的变量“e”中，而同样是函数表达式的“x”却不在AO/VO中：
+如果尝试在定义前或者定义后调用“x”函数，这时会发生“x为定义”的错误。未保存的函数表达式只有在定义或者递归时才能调用。  
+
+如下是更加典型的例子：  
+<pre><code>alert(x); // function
+ 
+var x = 10;
+alert(x); // 10
+ 
+x = 20;
+ 
+function x() {};
+ 
+alert(x); // 20</code></pre>
+
+上述例子中，为何“x”打印出来是函数呢？为何在申明前就可以访问到？又为何不是10或者20呢？原因在于，根据规则——在进入上下文的时候，VO会被填充函数申明；
+同一阶段，还有变量申明“x”，但是，正如此前提到的，变量申明是在函数申明和函数形参之后，并且，变量申明不会对已经存在的同样名字的函数申明和函数形参发生冲突，
+因此，在进入上下文的阶段，VO填充为如下形式：  
+<pre><code>VO = {};
+ 
+VO['x'] = <reference to FunctionDeclaration "x">
+ 
+// 发现var x = 10;
+// 如果函数“x”还未定义
+// 则 "x" 为undefined, 但是，在我们的例子中
+// 变量申明并不会影响同名的函数值
+ 
+VO['x'] = <the value is not disturbed, still function></code></pre>
+
+随后，在执行代码阶段，VO被修改为如下所示：  
+<pre><code>VO['x'] = 10;
+VO['x'] = 20;</code></pre>
+
+正如在第二个和第三个alert显示的那样。  
+
+如下例子再次看到在进入上下文阶段，变量存储在VO中（因此，尽管else的代码块永远都不会执行到，而“b”却仍然在VO中）：  
+<pre><code>if (true) {
+  var a = 1;
+} else {
+  var b = 2;
+}
+ 
+alert(a); // 1
+alert(b); // undefined, but not "b is not defined"</code></pre>
+
+关于变量
+--------
+* * *
+大多数讲JavaScript的文章甚至是JavaScript的书通常都会这么说：“申明全局变量的方式有两种，一种是使用_var_关键字（在全局上下文中），另外一种是不用_var_关键字（在任何位置）”。
+而这样的描述是错误的。要记住的是：  
+_使用var关键字是申明变量的唯一方式_  
+
+如下赋值语句：  
+<pre><code>a = 10;</code></pre>
+
+仅仅是在全局对象上创建了新的属性（而不是变量）。“不是变量”并不意味着它无法改变，它是ECMAScript中变量的概念（它之后可以变为全局对象的属性，因为VO(globalContext) === global，还记得吧？）  
+
+不同点如下所示：  
+<pre><code>alert(a); // undefined
+alert(b); // "b" is not defined
+ 
+b = 10;
+var a = 20;</code></pre>
+
+接下来还是要谈到VO和在不同阶段对VO的修改（进入上下文阶段和执行代码阶段）：  
+进入上下文：  
+<pre><code>VO = {
+  a: undefined
+};</code></pre>
+
+我们看到，这个阶段并没有任何“b”，因为它不是变量，“b”在执行代码阶段才出现。（但是，在我们这个例子中也不会出现，因为在“b”出现前就发生了错误）  
+
+将上述代码稍作改动：  
+<pre><code>alert(a); // undefined, we know why
+ 
+b = 10;
+alert(b); // 10, created at code execution
+ 
+var a = 20;
+alert(a); // 20, modified at code execution</code></pre>
+
+这里关于变量还有非常重要的一点：与简单属性不同的是，变量是不能删除的{DontDelete},这意味着要想通过**delete**操作符来删除一个变量是不可能的。  
+
+<pre><code>a = 10;
+alert(window.a); // 10
+ 
+alert(delete a); // true
+ 
+alert(window.a); // undefined
+ 
+var b = 20;
+alert(window.b); // 20
+ 
+alert(delete b); // false
+ 
+alert(window.b); // still 20</code></pre>
+
+但是，这里有个例外，就是“eval”执行上下文中，是可以删除变量的：
+<pre><code>eval('var a = 10;');
+alert(window.a); // 10
+ 
+alert(delete a); // true
+ 
+alert(window.a); // undefined</code></pre>
+
+利用某些debug工具，在终端测试过这些例子的童鞋要注意了：其中Firebug也是使用了eval来执行终端的代码。因此，这个时候var也是可以删除的。  
+
+
+实现层的特性：\_\_parent\_\_属性
+--------
+* * *
+正如此前介绍的，标准情况下，是无法直接访问激活对象的。然而，在某些实现中，比如知名的SpiderMonkey和Rhino,函数有个特殊的属性\_\_parent\_\_，
+该属性是对该函数创建所在的激活对象的引用（或者全局变量对象）。  
+
+如下所示（SpiderMonkey,Rhino）：  
+<pre><code>var global = this;
+var a = 10;
+ 
+function foo() {}
+ 
+alert(foo.__parent__); // global
+ 
+var VO = foo.__parent__;
+ 
+alert(VO.a); // 10
+alert(VO === global); // true</code></pre>
+
+上述例子中，可以看到函数_foo_是在全局上下文中创建的，相应的，它的\_\_parent\_\_属性设置为全局上下文的变量对象，比如说：全局对象。  
+
+然而，在SpiderMonkey中以相同的方式获取激活对象是不可能的：不同的版本表现都不同，内部函数的\_\_parent\_\_属性会返回null或者全局对象。  
+在Rhino中，以相同的方式获取激活对象是允许的：  
+
+如下所示（Rhino）：  
+<pre><code>var global = this;
+var x = 10;
+ 
+(function foo() {
+ 
+  var y = 20;
+ 
+  // the activation object of the "foo" context
+  var AO = (function () {}).__parent__;
+ 
+  print(AO.y); // 20
+ 
+  // __parent__ of the current activation
+  // object is already the global object,
+  // i.e. the special chain of variable objects is formed,
+  // so-called, a scope chain
+  print(AO.__parent__ === global); // true
+ 
+  print(AO.__parent__.x); // 10
+ 
+})();</code></pre>
+
+
+总结
+--------
+* * *
+本文，我们介绍了与执行上下文相关的对象。希望，本文能够对大家有所帮助，同时也希望本文能够起到解惑的作用。
+
+
+扩展阅读
+--------
+* * *
+
+*  10.1.3 —— [变量初始化](http://bclary.com/2004/11/07/#a-10.1.3)  
+*  10.1.5 —— [全局对象](http://bclary.com/2004/11/07/#a-10.1.5)  
+*  10.1.6 —— [激活对象](http://bclary.com/2004/11/07/#a-10.1.6)  
+*  10.1.8 —— [参数对象](http://bclary.com/2004/11/07/#a-10.1.8)  
+
