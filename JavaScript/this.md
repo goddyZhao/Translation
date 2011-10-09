@@ -317,4 +317,138 @@ foo.bar(); // Reference, OK => foo
 第三种情况是一个_赋值操作符_（_assignment operator_）,与组操作符不同的是，它会触发调用GetValue方法（参见[11.13.1](http://bclary.com/2004/11/07/#a-11.13.1)中的第三步）。
 最后返回的时候就是一个函数对象了（而不是引用类型的值了），这就意味着this的值会设置为null，最终会变成全局对象。  
 
+第四和第五种情况也是类似的——逗号操作符和OR逻辑表达式都会触发调用GetValue方法，于是相应地就会丢失原先的引用类型值，变成了函数类型，this的值就变成了全局对象了。  
+
+
+引用类型以及null（this的值）
+--------
+* * *
+有这么一种情况下，当调用表达式左侧是引用类型的值，但是this的值却是null，最终变为全局对象。
+发生这种情况的条件是当引用类型值的base对象恰好为**活跃对象**。  
+
+当内部子函数在父函数中被调用的时候就会发生这种情况。正如[第二章](http://goddyzhao.tumblr.com/post/11141710441/variable-object)介绍的，
+本地变量，内部函数以及函数的形参都会存储在指定函数的_活跃对象_中：  
+<pre><code>function foo() {
+  function bar() {
+    alert(this); // global
+  }
+  bar(); // 和AO.bar()是一样的
+}</code></pre>  
+
+活跃对象总是会返回this值为——null（用伪代码来表示，AO.bar()就相当于null.bar()）。然后，如此前描述的，this的值最终会由null变为全局对象。  
+
+当函数调用包含在_with_语句的代码块中，并且_with_对象包含一个函数属性的时候，就会出现例外的情况。_with_语句会将该对象添加到作用域链的最前面，在活跃对象的之前。
+相应地，在引用类型的值（标识符或者属性访问）的情况下，base对象就不再是活跃对象了，而是with语句的对象。另外，值得一提的是，它不仅仅只针对内部函数，全局函数也是如此，
+原因就是with对象掩盖了作用域链中更高层的对象（全局对象或者活跃对象）：  
+<pre><code>var x = 10;
+ 
+with ({
+ 
+  foo: function () {
+    alert(this.x);
+  },
+  x: 20
+ 
+}) {
+ 
+  foo(); // 20
+ 
+}
+ 
+// because
+ 
+var  fooReference = {
+  base: __withObject,
+  propertyName: 'foo'
+};</code></pre>
+
+当调用的函数恰好是_catch_从句的参数时，情况也是类似的：在这种情况下，_catch_对象也会添加到作用域链的最前面，在活跃对象和全局对象之前。
+然而，这个行为在ECMA-262-3中被指出是个bug，并且已经在ECMA-262-5中修正了；因此，在这种情况下，this的值应该设置为全局对象，而不是catch对象。  
+<pre><code>try {
+  throw function () {
+    alert(this);
+  };
+} catch (e) {
+  e(); // __catchObject - in ES3, global - fixed in ES5
+}
+ 
+// on idea
+ 
+var eReference = {
+  base: __catchObject,
+  propertyName: 'e'
+};
+ 
+// 然而，既然这是个bug
+// 那就应该强制设置为全局对象
+// null => global
+ 
+var eReference = {
+  base: global,
+  propertyName: 'e'
+};</code></pre>
+
+同样的情况还会在递归调用一个非匿名函数的时候发生（函数相关的内容会在第五章作相应的介绍）。在第一次函数调用的时候，base对象是外层的活跃对象（或者全局对象），
+在接下来的递归调用的时候——base对象应当是一个存储了可选的函数表达式名字的特殊对象，然而，事实却是，在这种情况下，this的值永远都是全局对象：  
+<pre><code>(function foo(bar) {
+ 
+  alert(this);
+ 
+  !bar && foo(1); // "should" be special object, but always (correct) global
+ 
+})(); // global</code></pre>
+
+
+但函数作为构造器被调用时this的值
+--------
+* * *
+这里要介绍的是函数上下文中关于this值的另外一种情况——当函数作为构造器被调用的时候：  
+<pre><code>function A() {
+  alert(this); // newly created object, below - "a" object
+  this.x = 10;
+}
+ 
+var a = new A();
+alert(a.x); // 10</code></pre>
+
+在这种情况下，[new](http://bclary.com/2004/11/07/#a-11.2.2)操作符会调用“A”函数的内部[\[\[Construct\]\]](http://bclary.com/2004/11/07/#a-13.2.2)。
+在对象创建之后，会调用内部的[\[\[Call\]\]](http://bclary.com/2004/11/07/#a-13.2.1)函数，然后所有“A”函数中this的值会设置为新创建的对象。 
+
+
+手动设置函数调用时this的值
+--------
+* * *
+_Function.prototype_上定义了两个方法（因此，它们对所有函数而言都是可访问的），允许手动指定函数调用时this的值。这两个方法是：_.apply_和_.call_；
+它们都接受第一个参数作为调用上下文中this的值。而它们的不同点其实无关紧要：对于_.apply_来说，第二个参数接受数组类型（或者是类数组的对象，比如_arguments_）,
+而_.call_方法接受任意多的参数。这两个方法只有第一个参数是必要的——this的值。
+
+如下所示：  
+<pre><code>var b = 10;
+ 
+function a(c) {
+  alert(this.b);
+  alert(c);
+}
+ 
+a(20); // this === global, this.b == 10, c == 20
+ 
+a.call({b: 20}, 30); // this === {b: 20}, this.b == 20, c == 30
+a.apply({b: 30}, [40]) // this === {b: 30}, this.b == 30, c == 40</code></pre>
+
+
+总结
+--------
+* * *
+本文我们讨论了ECMAScript中_this_关键字的特性（相对C++或者Java而言，真的可以说是特性）。洗完此文对大家理解this关键字在ECMAScript中的工作原理有所帮助。  
+
+
+
+扩展阅读
+--------
+* * *
+
+*  [This](http://bclary.com/2004/11/07/#a-10.1.7)
+*  [this关键字](http://bclary.com/2004/11/07/#a-11.1.1)
+*  [new操作符](http://bclary.com/2004/11/07/#a-11.2.2)
+*  [函数调用](http://bclary.com/2004/11/07/#a-11.2.3)
 
