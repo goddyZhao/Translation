@@ -269,8 +269,163 @@ bar(); // [10, 20]</code></pre>
 更多关于ECMAScript对闭包的实现细节会在第六章-闭包中做介绍。  
 
 
-通过函数构造器创建的函数\[\[Scope\]\]属性
+通过Function构造器创建的函数的\[\[Scope\]\]属性
 --------
 * * *
-在前面的例子中，我们看到
+在前面的例子中，我们看到函数在创建的时候就拥有了\[\[Scope\]\]属性，并且通过该属性可以获取所有上层上下文中的变量。
+然而，这里有个例外，就是当函数通过_Function_构造器创建的时候。  
+
+<pre><code>var x = 10;
+ 
+function foo() {
+ 
+  var y = 20;
+ 
+  function barFD() { // FunctionDeclaration
+    alert(x);
+    alert(y);
+  }
+ 
+  var barFE = function () { // FunctionExpression
+    alert(x);
+    alert(y);
+  };
+ 
+  var barFn = Function('alert(x); alert(y);');
+ 
+  barFD(); // 10, 20
+  barFE(); // 10, 20
+  barFn(); // 10, "y" is not defined
+ 
+}
+ 
+foo();</code></pre>
+
+上述例子中，函数“barFn”就是通过_Function_构造器来创建的，这个时候变量“y”就无法访问到了。
+但这并不意味着函数“barFn”就没有内部的\[\[Scope\]\]属性了（否则它连变量“x”都无法访问到了）。
+问题就在于当函数通过_Function_构造器来创建的时候，其\[\[Scope\]\]属性永远都只包含全局对象。
+哪怕在上层上下文中（非全局上下文）创建一个闭包都是无济于事的。  
+
+
+二维作用域链查询
+--------
+* * *
+在作用域链查询的时候还有很重要的一点：变量对象的原型（如果有的话）也是需要考虑的——因为原型是ECMAScript天生的特性：如果属性在对象中没有找到，那么会继续通过原型链进行查询。
+比方说如下这些二维链：(1)在作用域链的链接上，(2)在每个作用域链接上——深入到原型链的链接上。如果在原型链（_Object.prototype_）上定义了属性就能观察到效果了：  
+<pre><code>function foo() {
+  alert(x);
+}
+ 
+Object.prototype.x = 10;
+ 
+foo(); // 10</code></pre>
+
+活跃对象是没有原型这一说的。通过如下例子可以看出：  
+<pre><code>function foo() {
+ 
+  var x = 20;
+ 
+  function bar() {
+    alert(x);
+  }
+ 
+  bar();
+}
+ 
+Object.prototype.x = 10;
+ 
+foo(); // 20</code></pre>
+
+试想下，如果“bar”函数的活跃对象有原型的话，属性“x”则应当在Object.prototype中找到，因为它在AO中根本不存在。
+然而，上述第一个例子中，在标识符处理阶段遍历了整个作用域链，到了全局对象（部分实现是这样的），该对象继承自Object.prototype，因此，最终变量“x”的值就变成了10。  
+
+同样的情况，在某些版本的SpiderMonkey中，通过命名函数表达式（简称：NFE）也会发生，其中的存储了可选的函数表达式的名字的特殊对象也继承自_Object.prototype_,
+同样的，在某些版本的_Blackberry_中，也是如此，其活跃对象是继承自_Object.prototype_的。不过，关于这块详细的特性将会在第五章-函数中作介绍。  
+
+
+全局和eval上下文的作用域链
+--------
+* * *
+尽管这部分内容没多大意思，但还是值得一提的。全局上下文的作用域链中只包含全局对象。“eval”代码类型的上下文和调用上下文（_calling context_）有相同的作用域链。  
+<pre><code>globalContext.Scope = [
+  Global
+];
+ 
+evalContext.Scope === callingContext.Scope;</code></pre>
+
+
+执行代码阶段对作用域的影响
+--------
+* * *
+ECMAScript中，在运行时，执行代码阶段有两种语句可以修改作用域链——_with_语句和_catch_从句。在标识符查询阶段，这两者都会被添加到作用域链的最前面。
+比如，当有with或者catch的时候，作用域链就会被修改如下形式：  
+<pre><code>Scope = withObject|catchObject + AO|VO + [[Scope]]</code></pre>
+
+如下例子中，_with_语句添加了foo对象，使得它的属性可以不需要前缀直接访问。  
+<pre><code>var foo = {x: 10, y: 20};
+ 
+with (foo) {
+  alert(x); // 10
+  alert(y); // 20
+}</code></pre>
+
+
+对应的作用域链修改为如下所示：  
+<pre><code>Scope = foo + AO|VO + [[Scope]]</code></pre>
+
+接着来看下面这个例子：  
+<pre><code>var x = 10, y = 10;
+ 
+with ({x: 20}) {
+ 
+  var x = 30, y = 30;
+ 
+  alert(x); // 30
+  alert(y); // 30
+}
+ 
+alert(x); // 10
+alert(y); // 30</code></pre>
+
+发生了什么？怎么最外层的“y”变成了30？
+在进入上下文的时候，“x”和“y”标识符已经添加到了变量对象。之后，到了执行代码阶段，发生了如下的改动：  
+
+*  x=10, y=10  
+*  对象{x: 20}添加到了作用域链的最前面  
+*  在with中遇到了_var_语句，当然了，这个时候什么也不会发生。因为早在进入上下文阶段所有的变量都已经解析过了并且添加到了对应的变量对象上了。  
+*  这里修改了“x”的值，原本“x”是在第二步的时候添加的对象{x: 20}（该对象被添加到了作用域链的最前面）中的“x”，现在变成了30。  
+*  同样的，“y”的值也修改了，由原本的10变成了30  
+*  之后，在with语句结束之后，其特殊对象从作用域链中移除（修改过的“x”——30，也随之移除），作用域链又恢复到了with语句前的状态。  
+*  正如在最后两个alert中看到的，“x”的值恢复到了原先的10，而“y”的值因为在with语句的时候被修改过了，因此变为了30。  
+
+同样的，_catch_从句（可以访问参数异常）会创建一个只包含一个属性（异常参数名）的新对象。如下所示：  
+<pre><code>try {
+  ...
+} catch (ex) {
+  alert(ex);
+}</code></pre>
+
+作用域链修改为如下所示：  
+<pre><code>var catchObject = {
+  ex: <exception object>
+};
+ 
+Scope = catchObject + AO|VO + [[Scope]]</code></pre>
+
+在_catch_从句结束后，作用域链同样也会恢复到原先的状态。  
+
+
+总结
+--------
+* * *
+本文，介绍了几乎所有与执行上下文相关的概念以及相应的细节。后面的章节中，会给大家介绍函数对象的细节：函数的类型（_FunctionDeclaration_，_FunctionExpression_）和闭包。
+顺便提下，本文中介绍过，闭包是和\[\[Scope\]\]有直接的关系，但是关于闭包的细节会在后续章节中作介绍。  
+
+
+扩展阅读
+--------
+* * *
+
+*  8.6.2 —— [\[\[Scope\]\]](http://bclary.com/2004/11/07/#a-8.6.2)
+*  10.1.4 —— [作用域链和标识符的处理](http://bclary.com/2004/11/07/#a-10.1.4)
 
