@@ -340,4 +340,310 @@ foo(); // "foo" is not defined</code></pre>
 那么是在上层上下文的变量对象中吗？也不是，因为根据定义——FE是不会影响VO的——正如我们在外层对其调用的结果所看到的那样。
 那么，它究竟保存在哪里了呢？
 
+不卖关子了，马上来揭晓。当解释器在执行代码阶段看到了有名字的FE之后，它会在创建FE之前，创建一个辅助型的特殊对象，并把它添加到当前的作用域链中。
+然后，再创建FE，在这个时候（根据第四章-作用域链描述的），函数拥有了\[\[Scope\]\]属性 —— 创建函数所在上下文的作用域链（这个时候，在\[\[Scope\]\]就有了那个特殊对象）。
+之后，特殊对象中唯一的属性 —— FE的名字添加到了该对象中；其值就是对FE的引用。在最后，当前上下文退出的时候，就会把该特殊对象移除。
+用伪代码来描述此算法就如下所示：  
+<pre><code>specialObject = {};
+ 
+Scope = specialObject + Scope;
+ 
+foo = FunctionExpression;
+foo.[[Scope]] = Scope;
+specialObject.foo = foo; // {DontDelete}, {ReadOnly}
+ 
+delete Scope[0]; // 从作用域链的最前面移除specialObject</code></pre>
+
+这就是为什么在函数外是无法通过名字访问到该函数的（因为它并不在上层作用域中存在），而在函数内部却可以访问到。  
+
+而这里要注意的一点是： 在某些实现中，比如Rhino，FE的名字并不是保存在特殊对象中的，而是保存在FE的活跃对象中。
+再比如微软的实现 —— JScript，则完全破坏了FE的规则，直接将该名字保存在上层作用域的变量对象中了，这样在外部也可以访问到。  
+
+
+NFE和SpiderMonkey
+--------
+* * *
+说到实现，部分版本的SpiderMonkey有一个与上述提到的特殊对象相关的特性，这个特性也可以看作是个bug（既然所有的实现都是严格遵循标准的，那么这个就是标准的问题了）。
+此特性和标识符处理相关： 作用域链的分析是二维的，在标识符查询的时候，还要考虑作用域链中每个对象的原型链。  
+
+当在_Object.prototype_对象上定义一个属性，并将该属性值指向一个“根本不存在”的变量时，就能够体现该特性。
+比如，如下例子中的变量“x”，在查询过程中，通过作用域链，一直到全局对象也是找不到“x”的。
+然而，在SpiderMonkey中，全局对象继承自_Object.prototype_，于是，对应的值就在该对象中找到了：  
+<pre><code>Object.prototype.x = 10;
+ 
+(function () {
+  alert(x); // 10
+})();</code></pre>
+
+活跃对象是没有原型一说的。可以通过内部函数还证明。
+如果在定义一个本地变量“x”并声明一个内部函数（FD或者匿名的FE），然后，在内部函数中引用变量“x”，这个时候该变量会在上层函数上下文中查询到（理应如此），而不是在_Object.prototype_中：  
+<pre><code>Object.prototype.x = 10;
+ 
+function foo() {
+ 
+  var x = 20;
+ 
+  // function declaration 
+ 
+  function bar() {
+    alert(x);
+  }
+ 
+  bar(); // 20, from AO(foo)
+ 
+  // the same with anonymous FE
+ 
+  (function () {
+    alert(x); // 20, also from AO(foo)
+  })();
+ 
+}
+ 
+foo();</code></pre>
+
+在有些实现中，存在这样的异常：它们会在活跃对象设置原型。比方说，在_Blackberry_的实现中，上述例子中变量“x”值就会变成10。
+因为，“x”从_Object.prototype_中就找到了：  
+<pre><code>AO(bar FD or anonymous FE) -> no ->
+AO(bar FD or anonymous FE).[[Prototype]] -> yes - 10</code></pre>
+
+当出现有名字的FE的特殊对象的时候，在SpiderMonkey中也是有同样的异常。该特殊对象是常见对象 —— “和通过new Object()表达式产生的一样”。
+相应地，它也应当继承自_Object.prototype_，上述描述只针对SpiderMonkey（1.7版本）。其他的实现（包括新的TraceMonkey）是不会给这个特殊对象设置原型的：  
+<pre><code>function foo() {
+ 
+  var x = 10;
+ 
+  (function bar() {
+ 
+    alert(x); // 20, but not 10, as don't reach AO(foo)
+ 
+    // "x" is resolved by the chain:
+    // AO(bar) - no -> __specialObject(bar) -> no
+    // __specialObject(bar).[[Prototype]] - yes: 20
+ 
+  })();
+}
+ 
+Object.prototype.x = 20;
+ 
+foo();</code></pre>
+
+
+NFE和JScript
+--------
+* * *
+微软的实现——JScript，是IE的JS引擎（截至本文撰写时最新是JScript5.8——IE8），该引擎与NFE相关的bug有很多。每个bug基本上都和ECMA-262-3rd标准是完全违背的。
+有些甚至会引发严重的错误。  
+
+第一，针对上述这样的情况，JScript完全破坏了FE的规则：不应当将函数名字保存在变量对象中的。
+另外，FE的名字应当保存在特殊对象中，并且只有在函数自身内部才可以访问（其他地方均不可以）。而JScript却将其直接保存在上层上下文的变量对象中。
+并且，JScript居然还将FE以FD的方式处理，在进入上下文的时候就将其创建出来，并在定义之前就可以访问到：  
+<pre><code>// FE 保存在变量对象中
+// 和FD一样，在定义前就可以通过名字访问到
+testNFE();
+ 
+(function testNFE() {
+  alert('testNFE');
+});
+ 
+// 同样的，在定义之后也可以通过名字访问到
+testNFE();</code></pre>
+
+正如大家所见，完全破坏了FE的规则。  
+
+第二，在声明同时，将NFE赋值给一个变量的时候，JScript会创建两个不同的函数对象。
+这种行为感觉完全不符合逻辑（特别是考虑到在NFE外层，其名字根本是无法访问到的）：  
+<pre><code>var foo = function bar() {
+  alert('foo');
+};
+ 
+alert(typeof bar); // "function", NFE 有在VO中了 – 这里就错了
+ 
+// 然后，还有更有趣的
+alert(foo === bar); // false!
+ 
+foo.x = 10;
+alert(bar.x); // undefined
+ 
+// 然而，两个函数完全做的是同样的事情
+ 
+foo(); // "foo"
+bar(); // "foo"</code></pre>
+
+然而，要注意的是： 当将NFE和赋值给变量这两件事情分开的话（比如，通过组操作符），在定义好后，再进行变量赋值，这样，两个对象就相同了，返回true：  
+<pre><code>(function bar() {});
+ 
+var foo = bar;
+ 
+alert(foo === bar); // true
+ 
+foo.x = 10;
+alert(bar.x); // 10</code></pre>
+
+这个时候就好解释了。实施上，一开始的确创建了两个对象，不过之后就只剩下一个了。这里将NFE以FD的方式来处理，然后，当进入上下文的时候，FD bar就创建出来了。
+在这之后，到了执行代码阶段，又创建出了第二个对象 —— FE bar，该对象不会进行保存。相应的，由于没有变量对其进行引用，随后FE bar对象就被移除了。
+因此，这里就只剩下一个对象——FD bar对象，对该对象的引用就赋值给了foo变量。  
+
+第三，通过_arguments.callee_对一个函数进行间接引用，它引用的是和激活函数名一致的对象（事实上是——函数，因为有两个对象）：  
+<pre><code>var foo = function bar() {
+ 
+  alert([
+    arguments.callee === foo,
+    arguments.callee === bar
+  ]);
+ 
+};
+ 
+foo(); // [true, false]
+bar(); // [false, true]</code></pre>
+
+第四，JScript会将NFE以FD来处理，但当遇到条件语句又不遵循此规则了。比如说，和FD那样，NFE会在进入上下文的时候就创建出来，这样最后一次定义的就会被使用：  
+<pre><code>var foo = function bar() {
+  alert(1);
+};
+ 
+if (false) {
+ 
+  foo = function bar() {
+    alert(2);
+  };
+ 
+}
+bar(); // 2
+foo(); // 1</code></pre>
+
+上述行为从逻辑上也是可以解释通的： 当进入上下文的时候，最后一次定义的FD bar被创建出来（有alert(2)的函数），
+之后到了执行代码阶段又一个新的函数 —— FE bar被创建出来，对其引用赋值给了变量foo。因此（if代码块中由于判断条件是false，因此其代码块中的代码永远不会被执行到）foo函数的调用会打印出1。
+尽管“逻辑上”是对的，但是这个仍然算是IE的bug。因为它明显就破坏了实现的规则，所以我这里用了引号“逻辑上”。  
+
+第五个JScript中NFE的bug和通过给一个未受限的标识符赋值（也就是说，没有var关键字）来创建全局对象的属性相关。
+由于这里NFE会以FD的方式来处理，并相应地会保存在变量对象上，赋值给未受限的标识符（不是给变量而是给全局对象的一般属性），
+当函数名和标识符名字相同的时候，该属性就不会是全局的了。  
+<pre><code>(function () {
+ 
+  // 没有var，就不是本地变量，而是全局对象的属性
+ 
+  foo = function foo() {};
+ 
+})();
+ 
+// 然而，在匿名函数的外层，foo又是不可访问的
+ 
+alert(typeof foo); // undefined</code></pre>
+
+这里从“逻辑上”又是可以解释通的： 进入上下文时，函数声明在匿名函数本地上下文的活跃对象中。
+当进入执行代码阶段的时候，因为foo这个名字已经在AO中存在了（本地），相应地，赋值操作也只是简单的对AO中的foo进行更新而已。
+并没有在全局对象上创建新的属性。  
+
+
+通过Function构造器创建的函数
+--------
+* * *
+这类函数有别于FD和FE，有自己的专属特性： 它们的\[\[Scope\]\]属性中只包含全局对象：  
+<pre><code>var x = 10;
+ 
+function foo() {
+ 
+  var x = 20;
+  var y = 30;
+ 
+  var bar = new Function('alert(x); alert(y);');
+ 
+  bar(); // 10, "y" is not defined
+ 
+}</code></pre>
+
+我们看到_bar_函数的\[\[Scope\]\]属性并未包含foo上下文的AO —— 变量“y”是无法访问的，并且变量“x”是来自全局上下文。
+顺便提下，这里要注意的是，Function构造器可以通过_new_关键字和省略_new_关键字两种用法。上述例子中，这两种用法都是一样的。  
+
+此类函数其他特性则和[同类语法产生式](http://bclary.com/2004/11/07/#a-13.1.1)以及[联合对象](http://bclary.com/2004/11/07/#a-13.1.2)有关。
+该机制在标准中建议在作优化的时候采用（当然，具体的实现者也完全有权利不使用这类优化）。比方说，有100元素的数组，在循环数组过程中会给数组每个元素赋值（函数），
+这个时候，实现的时候就可以采用联合对象的机制了。这样，最终所有的数组元素都会引用同一个函数（只有一个函数）：  
+<pre><code>var a = [];
+ 
+for (var k = 0; k < 100; k++) {
+  a[k] = function () {}; // 这里就可以使用联合对象
+}</code></pre>
+
+但是，通过Function构造器创建的函数就无法使用联合对象了：  
+<pre><code>var a = [];
+ 
+for (var k = 0; k < 100; k++) {
+  a[k] = Function(''); // 只能是100个不同的函数
+}</code></pre>
+
+下面是另外一个和联合对象相关的例子：  
+<pre><code>function foo() {
+ 
+  function bar(z) {
+    return z * z;
+  }
+ 
+  return bar;
+}
+ 
+var x = foo();
+var y = foo();</code></pre>
+
+上述例子，在实现过程中同样可以使用联合对象。来使得x和y引用同一个对象，因为函数（包括它们内部的\[\[Scope\]\]属性）物理上是不可分辨的。
+因此，通过Function构造器创建的函数总是会占用更多内存资源。  
+
+
+函数创建的算法
+--------
+* * *
+如下所示使用伪代码表示的函数创建的算法（不包含联合对象的步骤）。有助于理解ECMAScript中的函数对象。此算法对所有函数类型都是一样的。
+<pre><code>F = new NativeObject();
+ 
+// 属性 [[Class]] is "Function"
+F.[[Class]] = "Function"
+ 
+// 函数对象的原型
+F.[[Prototype]] = Function.prototype
+ 
+// 对函数自身引用
+// [[Call]] 在函数调用时F()激活
+// 同时创建一个新的执行上下文
+F.[[Call]] = <reference to function>
+ 
+// 内置的构造器
+// [[Construct]] 会在使用“new”关键字的时候激活
+// 事实上，它会为新对象申请内存
+// 然后调用 F.[[Call]]来初始化创建的对象，将this值设置为新创建的对象
+F.[[Construct]] = internalConstructor
+ 
+// 当前上下文（创建函数F的上下文）的作用域名链
+F.[[Scope]] = activeContext.Scope
+// 如果是通过new Function(...)来创建的，则
+F.[[Scope]] = globalContext.Scope
+ 
+// 形参的个数
+F.length = countParameters
+ 
+// 通过F创建出来的对象的原型
+__objectPrototype = new Object();
+__objectPrototype.constructor = F // {DontEnum}, 在遍历中不能枚举
+F.prototype = __objectPrototype
+ 
+return F</code></pre>
+
+要注意的是，F.\[\[Prototype\]\]是函数（构造器）的原型，而F.prototype是通过该函数创建出来的对象的原型（因为通常对这两个概念都会混淆，在有些文章中会将_F.prototype_叫做“构造器的原型”，这是错误的）。  
+
+
+总结
+--------
+* * *
+本文介绍了很多关于函数的内容；不过在后面的关于对象和原型的文章中，还会提到函数作为构造器是如何工作的。  
+
+
+扩展阅读
+--------
+* * *
+ECMAScript标准：  
+
+*  13 —— [函数定义](http://bclary.com/2004/11/07/#a-13)
+*  15.3 —— [函数对象](http://bclary.com/2004/11/07/#a-15.3)
+
+另外一篇文章：  
+
+*  [揭秘有名字的函数表达式（来自Juriy “kangax” Zaytsev）](http://yura.thinkweb2.com/named-function-expressions/)
 
