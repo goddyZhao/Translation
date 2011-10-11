@@ -327,7 +327,7 @@ foo.bar(); // Reference, OK => foo
 发生这种情况的条件是当引用类型值的base对象恰好为**活跃对象**。  
 
 当内部子函数在父函数中被调用的时候就会发生这种情况。正如[第二章](http://goddyzhao.tumblr.com/post/11141710441/variable-object)介绍的，
-本地变量，内部函数以及函数的形参都会存储在指定函数的_活跃对象_中：  
+局部变量，内部函数以及函数的形参都会存储在指定函数的_活跃对象_中：  
 <pre><code>function foo() {
   function bar() {
     alert(this); // global
