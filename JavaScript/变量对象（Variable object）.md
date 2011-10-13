@@ -275,14 +275,14 @@ alert(x); // 20</code></pre>
 因此，在进入上下文的阶段，VO填充为如下形式：  
 <pre><code>VO = {};
  
-VO['x'] = <reference to FunctionDeclaration "x">
+VO['x'] = &lt;引用了函数声明“x”&gt;
  
 // 发现var x = 10;
 // 如果函数“x”还未定义
 // 则 "x" 为undefined, 但是，在我们的例子中
 // 变量声明并不会影响同名的函数值
  
-VO['x'] = <the value is not disturbed, still function></code></pre>
+VO['x'] = &lt;值不受影响，仍是函数&gt;</code></pre>
 
 随后，在执行代码阶段，VO被修改为如下所示：  
 <pre><code>VO['x'] = 10;
