@@ -119,7 +119,16 @@ JavaScript最早是运行在浏览器中，然而浏览器只是提供了一个�
 
 Node.js事实上就是另外一种上下文，它允许在后端（脱离浏览器环境）运行JavaScript代码。  
 
-要实现在后台运行JavaScript代码，代码需要先被解释然后正确的执行。Node.js的原理正式如此，它使用了Google的V8虚拟机（Google Chrome浏览器使用的JavaScript执行环境），来解释和执行JavaScript代码。  
+要实现在后台运行JavaScript代码，代码需要先被解释然后正确的执行。Node.js的原理正是如此，它使用了Google的V8虚拟机（Google Chrome浏览器使用的JavaScript执行环境），来解释和执行JavaScript代码。  
 
+除此之外，伴随着Node.js的还有许多有用的模块，它们可以简化很多重复的劳作，比如向终端输出字符串。  
+
+因此，Node.js事实上既是一个运行时环境，同时又是一个库。  
+
+要使用Node.js,首先需要进行安装。关于如何安装Node.js，这里就不赘述了，可以直接参考[官方的安装指南](https://github.com/joyent/node/wiki/Installation)。安装完成后，继续回来阅读本书下面的内容。  
+
+
+<a name="hello-world"></a>
+### “Hello World”  
 
 
