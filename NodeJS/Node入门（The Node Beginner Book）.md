@@ -114,5 +114,12 @@
 
 <a name="server-side-javascript"></a>
 ### 服务端JavaScript  
+JavaScript最早是运行在浏览器中，然而浏览器只是提供了一个上下文，它定义了使用JavaScript可以做什么，但并没有“说”太多关于JavaScript语言本身可以做什么。
+事实上，JavaScript是一门“完整”的语言： 它可以使用在不同的上下文中，其能力与其他同类语言有过之而无不及。  
+
+Node.js事实上就是另外一种上下文，它允许在后端（脱离浏览器环境）运行JavaScript代码。  
+
+要实现在后台运行JavaScript代码，代码需要先被解释然后正确的执行。Node.js的原理正式如此，它使用了Google的V8虚拟机（Google Chrome浏览器使用的JavaScript执行环境），来解释和执行JavaScript代码。  
+
 
 
