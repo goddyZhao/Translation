@@ -130,5 +130,29 @@ Node.js事实上就是另外一种上下文，它允许在后端（脱离浏览�
 
 <a name="hello-world"></a>
 ### “Hello World”  
+好了，“废话”不多说了，马上开始我们第一个Node.js应用：“Hello World”。  
+
+打开你最喜欢的编辑器，创建一个_helloworld.js_文件。我们要做就是向STDOUT输出“Hello World”，如下是实现该功能的代码：  
+<pre><code>console.log("Hello World");</code></pre>
+
+保存该文件，并通过Node.js来执行：  
+<pre><code>node helloword.js</code></pre>
+
+正常的话，就会在终端输出_Hello World_。  
+
+好吧，我承认这个应用是有点无趣，那么下面我们就来点“干货”。  
+
+
+<a name="a-full-blown-web-application-with-nodejs"></a>
+## 一个完整的基于Node.js的web应用  
+*这部分由Gray完成*  
+
+
+<a name="building-the-application-stack"></a>
+## 构建应用的模块  
+*这部分由Monday完成*  
+
+
+
 
 
