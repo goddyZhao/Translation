@@ -64,7 +64,7 @@
     * [行为驱动执行](#execution-in-the-kindom-of-verbs)  
     * [路由给真正的请求处理程序](#routing-to-real-request-handlers)  
     * [让请求处理程序作出响应](#making-request-handlers-respond)  
-        * [如何避免这样做](#how-to-not-do-it)  
+        * [不好的实现方式](#how-to-not-do-it)  
         * [阻塞与非阻塞](#blocking-and-non-blocking)  
         * [以非阻塞操作进行请求响应](#responding-request-handlers-with-non-blocking-operations)  
     * [更有用的场景](#serving-something-useful)  
@@ -164,7 +164,7 @@ Node.js事实上就是另外一种上下文，它允许在后端（脱离浏览�
 
 
 <a name="how-to-not-do-it"></a>
-#### 如何避免这样做  
+#### 不好的实现方式
 对于我们这样拥有PHP或者Ruby技术背景的开发者来说，最直截了当的实现方式事实上并不是非常靠谱： 看似有效，实则未必如此。  
 
 这里我指的”直截了当的实现方式“意思是：让请求处理程序通过_onRequest_函数直接返回（return()）他们要展示给用户的信息。  
@@ -339,4 +339,17 @@ exec()做了什么呢？它从Node.js来执行一个shell命令。在上述例�
 
 现在就到了问题根源所在了： 我们的代码是同步执行的，这就意味着在调用exec()之后，Node.js会立即执行 return content;。在这个时候，_content_仍然是“empty”，因为传递给exec()的回调函数还未执行到 —— 因为exec()的操作是异步的。  
 
+我们这里“ls -lah”的操作其实是非常快的（除非当前目录下有上百万个文件）。这也是为什么回调函数也会很快的执行到 —— 不过，不管怎么说它还是异步的。  
 
+为了让效果更加明显，我们想象一个更耗时的命令： “find /”，它在我机器上需要执行1分钟左右的时间，
+然而，尽管在请求处理程序中，我把“ls -lah”换成“find /”，当打开/start URL的时候，依然能够立即获得HTTP响应 —— 很明显，当_exec()_在后台执行的时候，Node.js自身会继续执行后面的代码。并且我们这里假设传递给_exec()_的回调函数，只会在“find /”命令执行完成之后才会被调用。  
+
+那究竟我们要如何才能实现将当前目录下的文件列表显示给用户呢？  
+
+好，了解了这种不好的实现方式之后，我们接下来来介绍如何让请求处理程序对浏览器请求作出正确的响应。  
+
+
+<a name="responding-request-handlers-with-non-blocking-operations"></a>
+#### 以非阻塞操作进行请求响应  
+
+ 
