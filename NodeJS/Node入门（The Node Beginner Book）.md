@@ -258,7 +258,7 @@ function upload() {
 exports.start = start;
 exports.upload = upload;</code></pre>
 
-上述代码中，当函数 _start()_ 被调用的时候，Node.js会先等待10秒，之后才会返回“Hello Start”。当调用_upload()_的时候，会和此前一样立即返回。  
+上述代码中，当函数 _start()_ 被调用的时候，Node.js会先等待10秒，之后才会返回“Hello Start”。当调用 _upload()_ 的时候，会和此前一样立即返回。  
 
 （当然了，这里只是模拟休眠10秒，实际场景中，这样的阻塞操作有很多，比方说一些长时间的计算操作等。）  
 
@@ -312,11 +312,11 @@ function upload() {
 exports.start = start;
 exports.upload = upload;</code></pre>
 
-上述代码中，我们引入了一个新的Node.js模块， _child_process_ 。之所以用它，是为了实现一个既简单又实用的非阻塞操作： _exec()_。  
+上述代码中，我们引入了一个新的Node.js模块， _child_process_ 。之所以用它，是为了实现一个既简单又实用的非阻塞操作： _exec()_ 。  
 
 exec()做了什么呢？它从Node.js来执行一个shell命令。在上述例子中，我们用它来获取当前目录下所有的文件（“ls -lah”）,然后，当/start URL请求的时候将文件信息输出到浏览器中。  
 
-上述代码是非常直观的： 创建了一个新的变量 _content_（初始值为“empty”），执行“ls -lah”命令，将结果赋值给content，最后将content返回。  
+上述代码是非常直观的： 创建了一个新的变量 _content_ （初始值为“empty”），执行“ls -lah”命令，将结果赋值给content，最后将content返回。  
 
 和往常一样，我们启动服务器，然后访问“http://localhost:8888/start”。  
 
@@ -427,7 +427,7 @@ exports.upload = upload;</code></pre>
 
 我们的处理程序函数需要接收response参数，为了对请求作出直接的响应。  
 
-_start_处理程序在exec()的匿名回调函数中作请求响应的操作，而 _upload_ 处理程序仍然是简单的回复“Hello World”，只是这次是使用response对象而已。  
+_start_ 处理程序在exec()的匿名回调函数中作请求响应的操作，而 _upload_ 处理程序仍然是简单的回复“Hello World”，只是这次是使用response对象而已。  
 
 这时再次我们启动应用（node index.js），一切都会工作的很好。  
 
