@@ -221,7 +221,7 @@ function start(route, handle) {
 
 exports.start = start;</code></pre>
 
-如果我们运行重构后的应用，一切都会工作的很好： 请求http://localhost:8888/start,浏览器会输出“Hello Start”，请求http://localhost:8888/upload会输出“Hello Upload”,而请求http://localhost:8888/foo会输出“404 Not found”。  
+如果我们运行重构后的应用，一切都会工作的很好： 请求http://localhost:8888/start, 浏览器会输出“Hello Start”，请求http://localhost:8888/upload 会输出“Hello Upload”,而请求http://localhost:8888/foo 会输出“404 Not found”。  
 
 好，那么问题在哪里呢？简单的说就是： 当未来有请求处理程序需要进行非阻塞的操作的时候，我们的应用就“挂”了。  
 
@@ -265,9 +265,9 @@ exports.upload = upload;</code></pre>
 接下来就让我们来看看，我们的改动带来了哪些变化。  
 
 如往常一样，我们先要重启下服务器。为了看到效果，我们要进行一些相对复杂的操作（跟着我一起做）： 首先，打开两个浏览器窗口或者标签页。
-在第一个浏览器窗口的地址栏中输入http://localhost:8888/start，但是先不要打开它！  
+在第一个浏览器窗口的地址栏中输入http://localhost:8888/start， 但是先不要打开它！  
 
-在第二个浏览器窗口的地址栏中输入http://localhost:8888/upload,同样的，先不要打开它！  
+在第二个浏览器窗口的地址栏中输入http://localhost:8888/upload， 同样的，先不要打开它！  
 
 接下来，作如下操作：在第一个窗口中（“/start”）按下回车，然后快速切换到第二个窗口中（“/upload”）按下回车。  
 
@@ -318,7 +318,7 @@ exec()做了什么呢？它从Node.js来执行一个shell命令。在上述例�
 
 上述代码是非常直观的： 创建了一个新的变量 _content_ （初始值为“empty”），执行“ls -lah”命令，将结果赋值给content，最后将content返回。  
 
-和往常一样，我们启动服务器，然后访问“http://localhost:8888/start”。  
+和往常一样，我们启动服务器，然后访问“http://localhost:8888/start” 。  
 
 之后会载入一个漂亮的web页面，其内容为“empty”。怎么回事？  
 
@@ -456,7 +456,7 @@ function upload(response) {
 exports.start = start;
 exports.upload = upload;</code></pre>
 
-这样一来，当请求http://localhost:8888/start的时候，会花10秒钟的时间才载入，而当请求http://localhost:8888/upload的时候，会立即响应，纵然这个时候/start响应还在处理中。  
+这样一来，当请求http://localhost:8888/start 的时候，会花10秒钟的时间才载入，而当请求http://localhost:8888/upload 的时候，会立即响应，纵然这个时候/start响应还在处理中。  
 
 
 <a name="serving-something-userful"></a>
