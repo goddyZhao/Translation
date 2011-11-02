@@ -165,8 +165,178 @@ Node.js事实上就是另外一种上下文，它允许在后端（脱离浏览�
 
 <a name="how-to-not-do-it"></a>
 #### 如何避免这样做  
-对于我们这样拥有PHP或者Ruby这样技术背景的开发者来说，最直截了当的实现方式事实上并不是非常靠谱： 看似有效，实则未必如此。  
+对于我们这样拥有PHP或者Ruby技术背景的开发者来说，最直截了当的实现方式事实上并不是非常靠谱： 看似有效，实则未必如此。  
 
-这里我指的”直截了当的实现方式“
+这里我指的”直截了当的实现方式“意思是：让请求处理程序通过_onRequest_函数直接返回（return()）他们要展示给用户的信息。  
+
+我们先就这样去实现，然后再来看为什么这不是一种很好的实现方式。  
+
+让我们从让请求处理程序返回需要在浏览器中显示的信息开始。我们需要将requestHandler.js修改为如下形式：  
+<pre><code>function start() {
+  console.log("Request handler 'start' was called.");
+  return "Hello Start";
+}
+
+function upload() {
+  console.log("Request handler 'upload' was called.");
+  return "Hello Upload";
+}
+
+exports.start = start;
+exports.upload = upload;</code></pre>
+
+好的。同样的，请求路由需要将请求处理程序返回给它的信息返回给服务器。因此，我们需要将_router.js_修改为如下形式：  
+<pre><code>function route(handle, pathname) {
+  console.log("About to route a request for " + pathname);
+  if (typeof handle[pathname] === 'function') {
+    return handle[pathname]();
+  } else {
+    console.log("No request handler found for " + pathname);
+    return "404 Not found";
+  }
+}
+
+exports.route = route;</code></pre>
+
+正如上述代码所示，当请求如何路由的时候，我们也返回了一些相关的错误信息。  
+
+最后，我们需要对我们的server.js进行重构以使得它能够将请求处理程序通过请求路由返回的内容响应给浏览器，如下所示：  
+<pre><code>var http = require("http");
+var url = require("url");
+
+function start(route, handle) {
+  function onRequest(request, response) {
+    var pathname = url.parse(request.url).pathname;
+    console.log("Request for " + pathname + " received.");
+
+    response.writeHead(200, {"Content-Type": "text/plain"});
+    var content = route(handle, pathname)
+    response.write(content);
+    response.end();
+  }
+
+  http.createServer(onRequest).listen(8888);
+  console.log("Server has started.");
+}
+
+exports.start = start;</code></pre>
+
+如果我们运行重构后的应用，一切都会工作的很好： 请求http://localhost:8888/start,浏览器会输出“Hello Start”，请求http://localhost:8888/upload会输出“Hello Upload”,而请求http://localhost:8888/foo会输出“404 Not found”。  
+
+好，那么问题在哪里呢？简单的说就是： 当未来有请求处理程序需要进行非阻塞的操作的时候，我们的应用就“挂”了。  
+
+没理解？没关系，那就来详细解释下。  
+
+
+<a name="blocking-and-non-blocking"></a>
+#### 阻塞与非阻塞  
+正如此前所提到的，当在请求处理程序中包括非阻塞操作时就会出问题。但是，在说这之前，我们先来看看什么是阻塞操作。  
+
+我不想去解释“阻塞”和“非阻塞”的具体含义，我们直接来看，当在请求处理程序中加入阻塞操作时会发生什么。  
+
+这里，我们来修改下 _start_请求处理程序，我们让它等待10秒以后再返回“Hello Start”。
+因为，JavaScript中没有类似 _sleep()_ 这样的操作，所以这里只能够来点小Hack来模拟实现。  
+
+让我们将_requestHandlers.js_修改成如下形式：  
+<pre><code>function start() {
+  console.log("Request handler 'start' was called.");
+
+  function sleep(milliSeconds) {
+    var startTime = new Date().getTime();
+    while (new Date().getTime() < startTime + milliSeconds);
+  }
+
+  sleep(10000);
+  return "Hello Start";
+}
+
+function upload() {
+  console.log("Request handler 'upload' was called.");
+  return "Hello Upload";
+}
+
+exports.start = start;
+exports.upload = upload;</code></pre>
+
+上述代码中，当函数_start()_被调用的时候，Node.js会先等待10秒，之后才会返回“Hello Start”。当调用_upload()_的时候，会和此前一样立即返回。  
+
+（当然了，这里只是模拟休眠10秒，实际场景中，这样的阻塞操作有很多，比方说一些长时间的计算操作等。）  
+
+接下来就让我们来看看，我们的改动带来了哪些变化。  
+
+如往常一样，我们先要重启下服务器。为了看到效果，我们要进行一些相对复杂的操作（跟着我一起做）： 首先，打开两个浏览器窗口或者标签页。
+在第一个浏览器窗口的地址栏中输入http://localhost:8888/start，但是先不要打开它！  
+
+在第二个浏览器窗口的地址栏中输入http://localhost:8888/upload,同样的，先不要打开它！  
+
+接下来，作如下操作：在第一个窗口中（“/start”）按下回车，然后快速切换到第二个窗口中（“/upload”）按下回车。  
+
+注意，发生了什么： /start URL加载花了10秒，这和我们预期的一样。但是，/upload URL居然也花了10秒，而它在对应的请求处理程序中并没有类似于_sleep()_这样的操作！  
+
+这到底是为什么呢？原因就是_start()_包含了阻塞操作。形象的说就是“它阻塞了所有其他的处理工作”。  
+
+这显然是个问题，因为Node一向是这样来标榜自己的：“_在node中除了代码，所有一切都是并行执行的_”。  
+
+这句话的意思是说，Node.js可以在不新增额外线程的情况下，依然可以对任务进行并行处理 —— Node.js是单线程的。
+它通过事件轮询（event loop）来实现并行操作，对此，我们应该要充分利用这一点 —— 尽可能的避免阻塞操作，取而代之，多使用非阻塞操作。  
+
+然而，要用非阻塞操作，我们需要使用回调，通过将函数作为参数传递给其他需要花时间做处理的函数（比方说，休眠10秒，或者查询数据库，又或者是进行大量的计算）。  
+
+对于Node.js来说，它是这样处理的：“嘿，probablyExpensiveFunction()（译者注：这里指的就是需要花时间处理的函数），你继续处理你的事情，我（Node.js线程）先不等你了，我继续去处理你后面的代码，请你提供一个callbackFunction()，等你处理完之后我会去调用该回调函数的，谢谢！”  
+
+（如果想要了解更多关于事件轮询细节，可以阅读Mixu的博文——[理解node.js的事件轮询](http://blog.mixu.net/2011/02/01/understanding-the-node-js-event-loop/)。）  
+
+接下来，我们会介绍一种错误的使用非阻塞操作的方式。  
+
+和上次一样，我们通过修改我们的应用来暴露问题。  
+
+这次我们还是拿start请求处理程序来“开刀”。将其修改成如下形式：  
+<pre><code>var exec = require("child_process").exec;
+
+function start() {
+  console.log("Request handler 'start' was called.");
+  var content = "empty";
+
+  exec("ls -lah", function (error, stdout, stderr) {
+    content = stdout;
+  });
+
+  return content;
+}
+
+function upload() {
+  console.log("Request handler 'upload' was called.");
+  return "Hello Upload";
+}
+
+exports.start = start;
+exports.upload = upload;</code></pre>
+
+上述代码中，我们引入了一个新的Node.js模块，_child_process_。之所以用它，是为了实现一个既简单又实用的非阻塞操作： _exec()_。  
+
+exec()做了什么呢？它从Node.js来执行一个shell命令。在上述例子中，我们用它来获取当前目录下所有的文件（“ls -lah”）,然后，当/start URL请求的时候将文件信息输出到浏览器中。  
+
+上述代码是非常直观的： 创建了一个新的变量 _content_（初始值为“empty”），执行“ls -lah”命令，将结果赋值给content，最后将content返回。  
+
+和往常一样，我们启动服务器，然后访问“http://localhost:8888/start”。  
+
+之后会载入了一个漂亮的web页面，其内容为“empty”。怎么回事？  
+
+这个时候，你可能大致已经猜到了，exec()在非阻塞这块发挥了神奇的功效。它其实是个很好的东西，有了它，我们可以执行非常耗时的shell操作而无需迫使我们的应用停下来等待该操作。  
+
+（如果想要证明这一点，可以将“ls -lah”换成比如“find /”这样更耗时的操作来效果）。  
+
+然而，针对浏览器显示的结果来看，我们并不满意我们的非阻塞操作，对吧？  
+
+好，接下来，我们来修正这个问题。在这过程中，让我们先来看看为什么当前的这种方式不起作用。  
+
+问题就在于，为了进行非阻塞工作，exec()使用了回调函数。  
+
+在我们的例子中，该回调函数就是作为第二个参数传递给exec()的匿名函数：  
+<pre><code>function (error, stdout, stderr) {
+  content = stdout;
+}</code></pre>
+
+现在就到了问题根源所在了： 我们的代码是同步执行的，这就意味着在调用exec()之后，Node.js会立即执行 return content;。在这个时候，_content_仍然是“empty”，因为传递给exec()的回调函数还未执行到 —— 因为exec()的操作是异步的。  
 
 
