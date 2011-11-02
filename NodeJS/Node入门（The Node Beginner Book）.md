@@ -364,5 +364,104 @@ exec()做了什么呢？它从Node.js来执行一个shell命令。在上述例�
 原理就是如此，接下来让我们来一步步实现这种方案。  
 
 让我们从_server.js_开始：  
-<pre><code></code></pre>
+<pre><code>var http = require("http");
+var url = require("url");
+
+function start(route, handle) {
+  function onRequest(request, response) {
+    var pathname = url.parse(request.url).pathname;
+    console.log("Request for " + pathname + " received.");
+
+    route(handle, pathname, response);
+  }
+
+  http.createServer(onRequest).listen(8888);
+  console.log("Server has started.");
+}
+
+exports.start = start;</code></pre>
+
+相对此前从_route()_函数获取返回值的做法，这次我们将response对象作为第三个参数传递给route()函数，并且，我们将onRequest()处理程序中所有有关response的函数调用就移除，因为我们希望这部分工作让route()函数来完成。  
+
+下面就来看看我们的_router.js_：  
+<pre><code>function route(handle, pathname, response) {
+  console.log("About to route a request for " + pathname);
+  if (typeof handle[pathname] === 'function') {
+    handle[pathname](response);
+  } else {
+    console.log("No request handler found for " + pathname);
+    response.writeHead(404, {"Content-Type": "text/plain"});
+    response.write("404 Not found");
+    response.end();
+  }
+}
+
+exports.route = route;</code></pre>
+
+同样的模式：相对此前从请求处理程序中获取返回值，这次取而代之的是直接传递response对象。  
+
+如果没有对应的请求处理器处理，我们就直接返回“404”错误。  
+
+最后，我们将requestHandler.js修改为如下形式：  
+<pre><code>var exec = require("child_process").exec;
+
+function start(response) {
+  console.log("Request handler 'start' was called.");
+
+  exec("ls -lah", function (error, stdout, stderr) {
+    response.writeHead(200, {"Content-Type": "text/plain"});
+    response.write(stdout);
+    response.end();
+  });
+}
+
+function upload(response) {
+  console.log("Request handler 'upload' was called.");
+  response.writeHead(200, {"Content-Type": "text/plain"});
+  response.write("Hello Upload");
+  response.end();
+}
+
+exports.start = start;
+exports.upload = upload;</code></pre>
+
+我们的处理程序函数需要接收response参数，为了对请求作出直接的响应。  
+
+_start_处理程序在exec()的匿名回调函数中作请求响应的操作，而_upload_处理程序仍然是简单的回复“Hello World”，只是这次是使用response对象而已。  
+
+这时再次我们启动应用（node index.js），一切都会工作的很好。  
+
+如果想要证明/start处理程序中耗时的操作不会阻塞对/upload请求作出立即响应的话，可以将_requestHandlers.js_修改为如下形式：  
+<pre><code>var exec = require("child_process").exec;
+
+function start(response) {
+  console.log("Request handler 'start' was called.");
+
+  exec("find /",
+    { timeout: 10000, maxBuffer: 20000*1024 },
+    function (error, stdout, stderr) {
+      response.writeHead(200, {"Content-Type": "text/plain"});
+      response.write(stdout);
+      response.end();
+    });
+}
+
+function upload(response) {
+  console.log("Request handler 'upload' was called.");
+  response.writeHead(200, {"Content-Type": "text/plain"});
+  response.write("Hello Upload");
+  response.end();
+}
+
+exports.start = start;
+exports.upload = upload;</code></pre>
+
+这样一来，当请求http://localhost:8888/start的时候，会花10秒钟的时间才载入，而当请求http://localhost:8888/upload的时候，会立即响应，纵然这个时候/start响应还在处理中。  
+
+
+<a name="serving-something-userful"></a>
+### 更有用的场景  
+到目前为止，我们做的已经很好了，但是，我们的应用没有实际用途。  
+
+
  
