@@ -132,13 +132,13 @@ Node.js事实上就是另外一种上下文，它允许在后端（脱离浏览�
 ### “Hello World”  
 好了，“废话”不多说了，马上开始我们第一个Node.js应用：“Hello World”。  
 
-打开你最喜欢的编辑器，创建一个_helloworld.js_文件。我们要做就是向STDOUT输出“Hello World”，如下是实现该功能的代码：  
+打开你最喜欢的编辑器，创建一个 _helloworld.js_ 文件。我们要做就是向STDOUT输出“Hello World”，如下是实现该功能的代码：  
 <pre><code>console.log("Hello World");</code></pre>
 
 保存该文件，并通过Node.js来执行：  
 <pre><code>node helloword.js</code></pre>
 
-正常的话，就会在终端输出_Hello World_。  
+正常的话，就会在终端输出 _Hello World_ 。  
 
 好吧，我承认这个应用是有点无趣，那么下面我们就来点“干货”。  
 
@@ -158,16 +158,16 @@ Node.js事实上就是另外一种上下文，它允许在后端（脱离浏览�
 
 很好。不过现在要是请求处理程序能够向浏览器返回一些有意义的信息而并非全是“Hello World”，那就更好了。  
 
-这里要记住的是，浏览器发出请求后获得并显示的“Hello World”信息仍是来自于我们server.js文件中的_onRequst_函数。  
+这里要记住的是，浏览器发出请求后获得并显示的“Hello World”信息仍是来自于我们server.js文件中的 _onRequst_ 函数。  
 
-其实“处理请求”说白了就是“对请求作出响应”，因此，我们需要让请求处理程序能够像_onRequest_函数那样可以和浏览器进行“对话”。  
+其实“处理请求”说白了就是“对请求作出响应”，因此，我们需要让请求处理程序能够像 _onRequest_ 函数那样可以和浏览器进行“对话”。  
 
 
 <a name="how-to-not-do-it"></a>
 #### 不好的实现方式
 对于我们这样拥有PHP或者Ruby技术背景的开发者来说，最直截了当的实现方式事实上并不是非常靠谱： 看似有效，实则未必如此。  
 
-这里我指的”直截了当的实现方式“意思是：让请求处理程序通过_onRequest_函数直接返回（return()）他们要展示给用户的信息。  
+这里我指的”直截了当的实现方式“意思是：让请求处理程序通过 _onRequest_ 函数直接返回（return()）他们要展示给用户的信息。  
 
 我们先就这样去实现，然后再来看为什么这不是一种很好的实现方式。  
 
@@ -185,7 +185,7 @@ function upload() {
 exports.start = start;
 exports.upload = upload;</code></pre>
 
-好的。同样的，请求路由需要将请求处理程序返回给它的信息返回给服务器。因此，我们需要将_router.js_修改为如下形式：  
+好的。同样的，请求路由需要将请求处理程序返回给它的信息返回给服务器。因此，我们需要将 _router.js_ 修改为如下形式：  
 <pre><code>function route(handle, pathname) {
   console.log("About to route a request for " + pathname);
   if (typeof handle[pathname] === 'function') {
@@ -234,10 +234,10 @@ exports.start = start;</code></pre>
 
 我不想去解释“阻塞”和“非阻塞”的具体含义，我们直接来看，当在请求处理程序中加入阻塞操作时会发生什么。  
 
-这里，我们来修改下 _start_请求处理程序，我们让它等待10秒以后再返回“Hello Start”。
-因为，JavaScript中没有类似 _sleep()_ 这样的操作，所以这里只能够来点小Hack来模拟实现。  
+这里，我们来修改下 _start_ 请求处理程序，我们让它等待10秒以后再返回“Hello Start”。
+因为，JavaScript中没有类似  _sleep()_ 这样的操作，所以这里只能够来点小Hack来模拟实现。  
 
-让我们将_requestHandlers.js_修改成如下形式：  
+让我们将 _requestHandlers.js_ 修改成如下形式：  
 <pre><code>function start() {
   console.log("Request handler 'start' was called.");
 
@@ -258,7 +258,7 @@ function upload() {
 exports.start = start;
 exports.upload = upload;</code></pre>
 
-上述代码中，当函数_start()_被调用的时候，Node.js会先等待10秒，之后才会返回“Hello Start”。当调用_upload()_的时候，会和此前一样立即返回。  
+上述代码中，当函数 _start()_ 被调用的时候，Node.js会先等待10秒，之后才会返回“Hello Start”。当调用_upload()_的时候，会和此前一样立即返回。  
 
 （当然了，这里只是模拟休眠10秒，实际场景中，这样的阻塞操作有很多，比方说一些长时间的计算操作等。）  
 
@@ -271,11 +271,11 @@ exports.upload = upload;</code></pre>
 
 接下来，作如下操作：在第一个窗口中（“/start”）按下回车，然后快速切换到第二个窗口中（“/upload”）按下回车。  
 
-注意，发生了什么： /start URL加载花了10秒，这和我们预期的一样。但是，/upload URL居然也花了10秒，而它在对应的请求处理程序中并没有类似于_sleep()_这样的操作！  
+注意，发生了什么： /start URL加载花了10秒，这和我们预期的一样。但是，/upload URL居然也花了10秒，而它在对应的请求处理程序中并没有类似于 _sleep()_ 这样的操作！  
 
-这到底是为什么呢？原因就是_start()_包含了阻塞操作。形象的说就是“它阻塞了所有其他的处理工作”。  
+这到底是为什么呢？原因就是 _start()_ 包含了阻塞操作。形象的说就是“它阻塞了所有其他的处理工作”。  
 
-这显然是个问题，因为Node一向是这样来标榜自己的：“_在node中除了代码，所有一切都是并行执行的_”。  
+这显然是个问题，因为Node一向是这样来标榜自己的：“ _在node中除了代码，所有一切都是并行执行的_ ”。  
 
 这句话的意思是说，Node.js可以在不新增额外线程的情况下，依然可以对任务进行并行处理 —— Node.js是单线程的。
 它通过事件轮询（event loop）来实现并行操作，对此，我们应该要充分利用这一点 —— 尽可能的避免阻塞操作，取而代之，多使用非阻塞操作。  
@@ -312,7 +312,7 @@ function upload() {
 exports.start = start;
 exports.upload = upload;</code></pre>
 
-上述代码中，我们引入了一个新的Node.js模块，_child_process_。之所以用它，是为了实现一个既简单又实用的非阻塞操作： _exec()_。  
+上述代码中，我们引入了一个新的Node.js模块， _child_process_ 。之所以用它，是为了实现一个既简单又实用的非阻塞操作： _exec()_。  
 
 exec()做了什么呢？它从Node.js来执行一个shell命令。在上述例子中，我们用它来获取当前目录下所有的文件（“ls -lah”）,然后，当/start URL请求的时候将文件信息输出到浏览器中。  
 
@@ -337,12 +337,12 @@ exec()做了什么呢？它从Node.js来执行一个shell命令。在上述例�
   content = stdout;
 }</code></pre>
 
-现在就到了问题根源所在了： 我们的代码是同步执行的，这就意味着在调用exec()之后，Node.js会立即执行 return content;。在这个时候，_content_仍然是“empty”，因为传递给exec()的回调函数还未执行到 —— 因为exec()的操作是异步的。  
+现在就到了问题根源所在了： 我们的代码是同步执行的，这就意味着在调用exec()之后，Node.js会立即执行 return content;。在这个时候，_content_ 仍然是“empty”，因为传递给exec()的回调函数还未执行到 —— 因为exec()的操作是异步的。  
 
 我们这里“ls -lah”的操作其实是非常快的（除非当前目录下有上百万个文件）。这也是为什么回调函数也会很快的执行到 —— 不过，不管怎么说它还是异步的。  
 
 为了让效果更加明显，我们想象一个更耗时的命令： “find /”，它在我机器上需要执行1分钟左右的时间，
-然而，尽管在请求处理程序中，我把“ls -lah”换成“find /”，当打开/start URL的时候，依然能够立即获得HTTP响应 —— 很明显，当_exec()_在后台执行的时候，Node.js自身会继续执行后面的代码。并且我们这里假设传递给_exec()_的回调函数，只会在“find /”命令执行完成之后才会被调用。  
+然而，尽管在请求处理程序中，我把“ls -lah”换成“find /”，当打开/start URL的时候，依然能够立即获得HTTP响应 —— 很明显，当 _exec()_ 在后台执行的时候，Node.js自身会继续执行后面的代码。并且我们这里假设传递给 _exec()_ 的回调函数，只会在“find /”命令执行完成之后才会被调用。  
 
 那究竟我们要如何才能实现将当前目录下的文件列表显示给用户呢？  
 
@@ -358,12 +358,12 @@ exec()做了什么呢？它从Node.js来执行一个shell命令。在上述例�
 到目前为止，我们的应用已经可以通过应用各层之间传递值的方式（请求处理程序 -> 请求路由 -> 服务器）将请求处理程序返回的内容（请求处理程序最终要显示给用户的内容）传递给HTTP服务器。  
 
 现在我们采用如下这种新的实现方式：相对采用将内容传递给服务器的方式，我们这次采用将服务器“传递”给内容的方式。
-从实践角度来说，就是将_response_对象（从服务器的回调函数_onRequest()_获取）通过请求路由传递给请求处理程序。
+从实践角度来说，就是将 _response_ 对象（从服务器的回调函数 _onRequest()_ 获取）通过请求路由传递给请求处理程序。
 随后，处理程序就可以采用该对象上的函数来对请求作出响应。  
 
 原理就是如此，接下来让我们来一步步实现这种方案。  
 
-让我们从_server.js_开始：  
+让我们从 _server.js_ 开始：  
 <pre><code>var http = require("http");
 var url = require("url");
 
@@ -381,9 +381,9 @@ function start(route, handle) {
 
 exports.start = start;</code></pre>
 
-相对此前从_route()_函数获取返回值的做法，这次我们将response对象作为第三个参数传递给route()函数，并且，我们将onRequest()处理程序中所有有关response的函数调用就移除，因为我们希望这部分工作让route()函数来完成。  
+相对此前从 _route()_ 函数获取返回值的做法，这次我们将response对象作为第三个参数传递给route()函数，并且，我们将onRequest()处理程序中所有有关response的函数调用就移除，因为我们希望这部分工作让route()函数来完成。  
 
-下面就来看看我们的_router.js_：  
+下面就来看看我们的 _router.js_ ：  
 <pre><code>function route(handle, pathname, response) {
   console.log("About to route a request for " + pathname);
   if (typeof handle[pathname] === 'function') {
@@ -427,11 +427,11 @@ exports.upload = upload;</code></pre>
 
 我们的处理程序函数需要接收response参数，为了对请求作出直接的响应。  
 
-_start_处理程序在exec()的匿名回调函数中作请求响应的操作，而_upload_处理程序仍然是简单的回复“Hello World”，只是这次是使用response对象而已。  
+_start_处理程序在exec()的匿名回调函数中作请求响应的操作，而 _upload_ 处理程序仍然是简单的回复“Hello World”，只是这次是使用response对象而已。  
 
 这时再次我们启动应用（node index.js），一切都会工作的很好。  
 
-如果想要证明/start处理程序中耗时的操作不会阻塞对/upload请求作出立即响应的话，可以将_requestHandlers.js_修改为如下形式：  
+如果想要证明/start处理程序中耗时的操作不会阻塞对/upload请求作出立即响应的话，可以将 _requestHandlers.js_ 修改为如下形式：  
 <pre><code>var exec = require("child_process").exec;
 
 function start(response) {
