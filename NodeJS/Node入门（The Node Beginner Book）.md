@@ -82,7 +82,7 @@
 
 而你真正想要的是“干货”，你想要知道如何构建复杂的web站点 —— 于是，你学习了一种诸如PHP，Ruby，Java之类的编程语言，并开始书写“后端”代码。  
 
-然而，你始终还在关注着JavaScript，随着通过一些对jQuery，Prototype之类技术的介绍，你慢慢了解到了很多JavaScript中的进阶技能，同时也感受到了JavaScript绝非仅仅是_window.open()_那么简单。  
+然而，你始终还在关注着JavaScript，随着通过一些对jQuery，Prototype之类技术的介绍，你慢慢了解到了很多JavaScript中的进阶技能，同时也感受到了JavaScript绝非仅仅是 _window.open()_ 那么简单。  
 
 不过，这些毕竟都是前端技术，尽管当你想要增强页面的时候，使用jQuery总让你觉得很爽，但是，最终，你顶多是个JavaScript用户，而非JavaScript开发者。  
 
