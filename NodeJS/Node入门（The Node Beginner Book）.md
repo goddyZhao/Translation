@@ -913,5 +913,87 @@ exports.start = start;
 
 exports.route = route;</code></pre>
 
+现在，_request_ 对象就可以在我们的 _upload_ 请求处理程序中使用了。node-formidable会处理将上传的文件保存到本地 /tmp目录中，而我们需要做的是确保该文件保存成 /tmp/test.png。
+没错，我们保持简单，并假设只允许上传PNG图片。  
+
+这里采用 _fs.renameSync(path1,path2)_ 来实现。要注意的是，正如其名，该方法是同步执行的，也就是说，如果该重命名的操作很耗时的话会阻塞。
+这块我们先不考虑。  
+
+接下来，我们把处理文件上传以及重命名的操作放到一起，如下 _requestHandlers.js_ 所示：  
+<pre><code>var querystring = require("querystring"),
+    fs = require("fs"),
+    formidable = require("formidable");
+
+function start(response) {
+  console.log("Request handler 'start' was called.");
+
+  var body = '<html>'+
+    '<head>'+
+    '<meta http-equiv="Content-Type" content="text/html; '+
+    'charset=UTF-8" />'+
+    '</head>'+
+    '<body>'+
+    '<form action="/upload" enctype="multipart/form-data" '+
+    'method="post">'+
+    '<input type="file" name="upload" multiple="multiple">'+
+    '<input type="submit" value="Upload file" />'+
+    '</form>'+
+    '</body>'+
+    '</html>';
+
+    response.writeHead(200, {"Content-Type": "text/html"});
+    response.write(body);
+    response.end();
+}
+
+function upload(response, request) {
+  console.log("Request handler 'upload' was called.");
+
+  var form = new formidable.IncomingForm();
+  console.log("about to parse");
+  form.parse(request, function(error, fields, files) {
+    console.log("parsing done");
+    fs.renameSync(files.upload.path, "/tmp/test.png");
+    response.writeHead(200, {"Content-Type": "text/html"});
+    response.write("received image:<br/>");
+    response.write("<img src='/show' />");
+    response.end();
+  });
+}
+
+function show(response) {
+  console.log("Request handler 'show' was called.");
+  fs.readFile("/tmp/test.png", "binary", function(error, file) {
+    if(error) {
+      response.writeHead(500, {"Content-Type": "text/plain"});
+      response.write(error + "\n");
+      response.end();
+    } else {
+      response.writeHead(200, {"Content-Type": "image/png"});
+      response.write(file, "binary");
+      response.end();
+    }
+  });
+}
+
+exports.start = start;
+exports.upload = upload;
+exports.show = show;</code></pre>
+
+好了，重启服务器，我们应用所有的功能就可以用了。选择一张本地图片，将其上传到服务器，然后浏览器就会显示该图片。  
+
+
+<a name="conclusion-and-outlokk"></a>
+## 总结与展望  
+恭喜，我们的任务已经完成了！我们开发完了一个Node.js的web应用，应用虽小，但是“五脏俱全”。 期间，我们介绍了很多技术点：服务端JavaScript、函数式编程、阻塞与非阻塞、回调、事件、内部和外部模块等等。  
+
+当然了，还有许多本书没有介绍到的： 如何操作数据库、如何进行单元测试、如何开发Node.js的外部模块以及一些简单的诸如如何获取GET请求之类的方法。  
+
+但本书毕竟只是一本给初学者的教程 —— 不可能覆盖到所有的内容。  
+
+幸运的是，Node.js社区非常的活跃（作个不恰当的比喻就是犹如一群有多动症小孩子在一起，能不活跃吗？），这意味着，有许多关于Node.js的资源，有什么问题都可以向社区寻求解答。
+其中[Node.js社区的wiki](https://github.com/joyent/node/wiki)以及[NodeClould](http://www.nodecloud.org/)就是最好的资源。  
+
+
 
 
