@@ -737,3 +737,181 @@ http.createServer(function(req, res) {
         filename: [Getter],
         mime: [Getter] } } }</code></pre>
         
+为了实现我们的功能，我们需要将上述代码应用到我们的应用中，另外，我们还要考虑如何将上传文件的内容（保存在/tmp目录中）显示到浏览器中。  
+
+我们先来解决后面那个问题： 对于保存在本地硬盘中的文件，如何才能在浏览器中看到呢？  
+
+显然，我们需要将该文件读取到我们的服务器中，使用一个叫 _fs_ 的模块。  
+
+我们来添加/show URL的请求处理程序，该处理程序直接硬编码将文件 /tmp/test.png内容展示到浏览器中。当然了，首先需要将该图片保存到这个位置才行。  
+
+将 _requestHandlers.js_ 修改为如下形式：  
+<pre><code>var querystring = require("querystring"),
+    fs = require("fs");
+
+function start(response, postData) {
+  console.log("Request handler 'start' was called.");
+
+  var body = '<html>'+
+    '<head>'+
+    '<meta http-equiv="Content-Type" '+
+    'content="text/html; charset=UTF-8" />'+
+    '</head>'+
+    '<body>'+
+    '<form action="/upload" method="post">'+
+    '<textarea name="text" rows="20" cols="60"></textarea>'+
+    '<input type="submit" value="Submit text" />'+
+    '</form>'+
+    '</body>'+
+    '</html>';
+
+    response.writeHead(200, {"Content-Type": "text/html"});
+    response.write(body);
+    response.end();
+}
+
+function upload(response, postData) {
+  console.log("Request handler 'upload' was called.");
+  response.writeHead(200, {"Content-Type": "text/plain"});
+  response.write("You've sent the text: "+
+  querystring.parse(postData).text);
+  response.end();
+}
+
+function show(response, postData) {
+  console.log("Request handler 'show' was called.");
+  fs.readFile("/tmp/test.png", "binary", function(error, file) {
+    if(error) {
+      response.writeHead(500, {"Content-Type": "text/plain"});
+      response.write(error + "\n");
+      response.end();
+    } else {
+      response.writeHead(200, {"Content-Type": "image/png"});
+      response.write(file, "binary");
+      response.end();
+    }
+  });
+}
+
+exports.start = start;
+exports.upload = upload;
+exports.show = show;</code></pre>
+
+我们还需要将这新的请求处理程序，添加到index.js中的路由映射表中：  
+<pre><code>var server = require("./server");
+var router = require("./router");
+var requestHandlers = require("./requestHandlers");
+
+var handle = {}
+handle["/"] = requestHandlers.start;
+handle["/start"] = requestHandlers.start;
+handle["/upload"] = requestHandlers.upload;
+handle["/show"] = requestHandlers.show;
+
+server.start(router.route, handle);</code></pre>
+
+重启服务器之后，通过访问 http://localhost:8888/show，就可以看到保存在 /tmp/test.png 的图片了。  
+
+好，最后我们要的就是：  
+
+*  在/start 表单中添加一个文件上传元素  
+*  将node-formidable整合到我们的 _upload_ 请求处理程序中，用于将上传的图片保存到 /tmp/test.png  
+*  将上传的图片内嵌到/upload URL输出的HTML中  
+
+第一项很简单。只需要在HTML表单中，添加一个 _multipart/form-data_ 的编码类型，移除此前的文本区，添加一个文件上传组件，并将提交按钮的文案改为“Upload file”即可。
+如下 _requestHandler.js_ 所示：  
+<pre><code>var querystring = require("querystring"),
+    fs = require("fs");
+
+function start(response, postData) {
+  console.log("Request handler 'start' was called.");
+
+  var body = '<html>'+
+    '<head>'+
+    '<meta http-equiv="Content-Type" '+
+    'content="text/html; charset=UTF-8" />'+
+    '</head>'+
+    '<body>'+
+    '<form action="/upload" enctype="multipart/form-data" '+
+    'method="post">'+
+    '<input type="file" name="upload">'+
+    '<input type="submit" value="Upload file" />'+
+    '</form>'+
+    '</body>'+
+    '</html>';
+
+    response.writeHead(200, {"Content-Type": "text/html"});
+    response.write(body);
+    response.end();
+}
+
+function upload(response, postData) {
+  console.log("Request handler 'upload' was called.");
+  response.writeHead(200, {"Content-Type": "text/plain"});
+  response.write("You've sent the text: "+
+  querystring.parse(postData).text);
+  response.end();
+}
+
+function show(response, postData) {
+  console.log("Request handler 'show' was called.");
+  fs.readFile("/tmp/test.png", "binary", function(error, file) {
+    if(error) {
+      response.writeHead(500, {"Content-Type": "text/plain"});
+      response.write(error + "\n");
+      response.end();
+    } else {
+      response.writeHead(200, {"Content-Type": "image/png"});
+      response.write(file, "binary");
+      response.end();
+    }
+  });
+}
+
+exports.start = start;
+exports.upload = upload;
+exports.show = show;</code></pre>
+
+很好。下一步相对比较复杂。这里有这样一个问题： 我们需要在 _upload_ 处理程序中对上传的文件进行处理，这样的话，我们就需要将 _request_ 对象传递给node-formidable的form.parse函数。  
+
+但是，我们有的只是 _response_ 对象和 _postData_ 数组。看样子，我们只能不得不将 _request_ 对象从服务器开始一路通过请求路由，再传递给请求处理程序。
+或许还有更好的方案，但是，不管怎么说，目前这样做可以满足我们的需求。  
+
+到这里，我们可以将 _postData_ 从服务器以及请求处理程序中移除了 —— 一方面，对于我们处理文件上传来说已经不需要了，另外一方面，它甚至可能会引发这样一个问题：
+我们已经“消耗”了 _request_ 对象中的数据，这意味着，对于 _form.parse_ 来说，当它想要获取数据的时候就什么也获取不到了。（因为Node.js不会对数据做缓存）  
+
+我们从 _server.js_ 开始 —— 移除对postData的处理以及 _request.setEncoding_ （这部分node-formidable自身会处理），转而采用将 _request_ 对象传递给请求路由的方式：  
+<pre><code>var http = require("http");
+var url = require("url");
+
+function start(route, handle) {
+  function onRequest(request, response) {
+    var pathname = url.parse(request.url).pathname;
+    console.log("Request for " + pathname + " received.");
+    route(handle, pathname, response, request);
+  }
+
+  http.createServer(onRequest).listen(8888);
+  console.log("Server has started.");
+}
+
+exports.start = start;
+</code></pre>
+
+接下来是 _router.js_ —— 我们不再需要传递 _postData_了，这次要传递 _request_ 对象：  
+<pre><code>function route(handle, pathname, response, request) {
+  console.log("About to route a request for " + pathname);
+  if (typeof handle[pathname] === 'function') {
+    handle[pathname](response, request);
+  } else {
+    console.log("No request handler found for " + pathname);
+    response.writeHead(404, {"Content-Type": "text/html"});
+    response.write("404 Not found");
+    response.end();
+  }
+}
+
+exports.route = route;</code></pre>
+
+
+
