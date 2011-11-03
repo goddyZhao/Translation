@@ -898,7 +898,7 @@ function start(route, handle) {
 exports.start = start;
 </code></pre>
 
-接下来是 _router.js_ —— 我们不再需要传递 _postData_了，这次要传递 _request_ 对象：  
+接下来是 _router.js_ —— 我们不再需要传递 _postData_ 了，这次要传递 _request_ 对象：  
 <pre><code>function route(handle, pathname, response, request) {
   console.log("About to route a request for " + pathname);
   if (typeof handle[pathname] === 'function') {
