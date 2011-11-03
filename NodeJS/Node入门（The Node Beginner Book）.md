@@ -381,7 +381,7 @@ function start(route, handle) {
 
 exports.start = start;</code></pre>
 
-相对此前从 _route()_ 函数获取返回值的做法，这次我们将response对象作为第三个参数传递给route()函数，并且，我们将onRequest()处理程序中所有有关response的函数调都移除，因为我们希望这部分工作让route()函数来完成。  
+相对此前从 _route()_ 函数获取返回值的做法，这次我们将response对象作为第三个参数传递给route()函数，并且，我们将onRequest()处理程序中所有有关response的函数调用都移除，因为我们希望这部分工作让route()函数来完成。  
 
 下面就来看看我们的 _router.js_ ：  
 <pre><code>function route(handle, pathname, response) {
