@@ -519,9 +519,9 @@ exports.upload = upload;</code></pre>
 
 现在，我们已经是新手中的专家了，很自然会想到采用异步回调来实现非阻塞地处理POST请求的数据。  
 
-这里采用非阻塞方式处理是更明智的，因为POST请求一般都比较“重” —— 用户可能会输入大量的内容。用阻塞的方式处理大数据量的请求必然会导致用户操作的阻塞。  
+这里采用非阻塞方式处理是明智的，因为POST请求一般都比较“重” —— 用户可能会输入大量的内容。用阻塞的方式处理大数据量的请求必然会导致用户操作的阻塞。  
 
-为了使整个过程非阻塞，Node.js会将POST数据拆分成很多小的数据块，然后通过触发特定的事件，将这些小数据块传递给回调函数。这里的特定的事件指有 _data_ 事件（表示新的小数据块到达了）以及 _end_ 事件（表示所有的数据都已经接收完毕）。  
+为了使整个过程非阻塞，Node.js会将POST数据拆分成很多小的数据块，然后通过触发特定的事件，将这些小数据块传递给回调函数。这里的特定的事件有 _data_ 事件（表示新的小数据块到达了）以及 _end_ 事件（表示所有的数据都已经接收完毕）。  
 
 我们需要告诉Node.js当这些事件触发的时候，回调哪些函数。怎么告诉呢？ 我们通过在 _request_ 对象上注册 _监听器（listener）_ 来实现。这里的request对象是每次接收到HTTP请求时候，都会把该对象传递给 _onRequest_ 回调函数。  
 
@@ -534,7 +534,7 @@ request.addListener("end", function() {
   // 所有数据都接收完毕后会触发
 });</code></pre>
 
-问题来了，这部分逻辑写在哪里呢？ 我们现在只是在服务器中获取到了 _request_ 对象 —— 我们并没有像之前 _response_ 对象那样，把 _request_对象传递给请求路由和请求处理程序。  
+问题来了，这部分逻辑写在哪里呢？ 我们现在只是在服务器中获取到了 _request_ 对象 —— 我们并没有像之前 _response_ 对象那样，把 _request_ 对象传递给请求路由和请求处理程序。  
 
 在我看来，获取所有来自请求的数据，然后将这些数据给应用层处理，应该是HTTP服务器要做的事情。因此，我建议，我们直接在服务器中处理POST数据，然后将最终的数据传递给请求路由和请求处理器，让他们来进行进一步的处理。  
 
@@ -571,7 +571,7 @@ function start(route, handle) {
 exports.start = start;</code></pre>
 
 上述代码做了三件事情： 首先，我们设置了接收数据的编码格式为UTF-8，然后注册了“data”事件的监听器，
-用于收集每次接收到的新数据块，并将其赋值给 _postData_变量，
+用于收集每次接收到的新数据块，并将其赋值给 _postData_ 变量，
 最后，我们将请求路由的调用移到 _end_ 事件处理程序中，以确保它只会当所有数据接收完毕后才触发，并且只触发一次。
 我们同时还把POST数据传递给请求路由，因为这些数据，请求处理程序会用到。  
 
@@ -678,7 +678,7 @@ exports.upload = upload;</code></pre>
 这里我们要用到的外部模块是 Felix Geisendörfer开发的 _node-formidable_ 模块。它对解析上传的文件数据做了很好的抽象。
 其实说白了，处理文件上传“就是”处理POST数据 —— 但是，麻烦的是在具体的处理细节，所以，这里采用现成的方案更合适点。  
 
-使用该模块，首先需要安装该模块。Node.js有它自己的包管理器，叫 _NPM_。 它可以让安装Node.js的外部模块变得非常方便。通过如下一条命令就可以完成该模块的安装：  
+使用该模块，首先需要安装该模块。Node.js有它自己的包管理器，叫 _NPM_ 。 它可以让安装Node.js的外部模块变得非常方便。通过如下一条命令就可以完成该模块的安装：  
 <pre><code>npm install formidable</code></pre>
 
 如果终端输出如下内容：  
@@ -687,10 +687,10 @@ npm ok</code></pre>
 
 就说明模块已经安装成功了。  
 
-现在我们就可以用 _formidable_模块了 —— 使用外部模块与内部模块类似，用require语句将其引入即可：  
+现在我们就可以用 _formidable_ 模块了 —— 使用外部模块与内部模块类似，用require语句将其引入即可：  
 <pre><code>var formidable = require("formidable");</code></pre>
 
-这里该模块做的就是将通过HTTP POST请求提交的表单，在Node.js中可以被解析。我们要做的就是创建一个新的 _IncomingForm_， 它是对提交表单的抽象表示，之后，就可以用它解析request对象，获取表单中需要的数据字段。  
+这里该模块做的就是将通过HTTP POST请求提交的表单，在Node.js中可以被解析。我们要做的就是创建一个新的 _IncomingForm_ ， 它是对提交表单的抽象表示，之后，就可以用它解析request对象，获取表单中需要的数据字段。  
 
 node-formidable官方的例子展示了这两部分是如何融合在一起工作的：  
 <pre><code>var formidable = require('formidable'),
@@ -956,7 +956,7 @@ function upload(response, request) {
     fs.renameSync(files.upload.path, "/tmp/test.png");
     response.writeHead(200, {"Content-Type": "text/html"});
     response.write("received image:&lt;br/&gt;");
-    response.write("&lt;img src='/show' /gt;");
+    response.write("&lt;img src='/show' /&gt;");
     response.end();
   });
 }
@@ -985,13 +985,13 @@ exports.show = show;</code></pre>
 
 <a name="conclusion-and-outlokk"></a>
 ## 总结与展望  
-恭喜，我们的任务已经完成了！我们开发完了一个Node.js的web应用，应用虽小，但是“五脏俱全”。 期间，我们介绍了很多技术点：服务端JavaScript、函数式编程、阻塞与非阻塞、回调、事件、内部和外部模块等等。  
+恭喜，我们的任务已经完成了！我们开发完了一个Node.js的web应用，应用虽小，但却“五脏俱全”。 期间，我们介绍了很多技术点：服务端JavaScript、函数式编程、阻塞与非阻塞、回调、事件、内部和外部模块等等。  
 
 当然了，还有许多本书没有介绍到的： 如何操作数据库、如何进行单元测试、如何开发Node.js的外部模块以及一些简单的诸如如何获取GET请求之类的方法。  
 
 但本书毕竟只是一本给初学者的教程 —— 不可能覆盖到所有的内容。  
 
-幸运的是，Node.js社区非常的活跃（作个不恰当的比喻就是犹如一群有多动症小孩子在一起，能不活跃吗？），这意味着，有许多关于Node.js的资源，有什么问题都可以向社区寻求解答。
+幸运的是，Node.js社区非常活跃（作个不恰当的比喻就是犹如一群有多动症小孩子在一起，能不活跃吗？），这意味着，有许多关于Node.js的资源，有什么问题都可以向社区寻求解答。
 其中[Node.js社区的wiki](https://github.com/joyent/node/wiki)以及[NodeClould](http://www.nodecloud.org/)就是最好的资源。  
 
 
