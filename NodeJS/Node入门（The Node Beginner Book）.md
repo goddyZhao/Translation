@@ -243,7 +243,7 @@ exports.start = start;</code></pre>
 
   function sleep(milliSeconds) {
     var startTime = new Date().getTime();
-    while (new Date().getTime() < startTime + milliSeconds);
+    while (new Date().getTime() &lt; startTime + milliSeconds);
   }
 
   sleep(10000);
