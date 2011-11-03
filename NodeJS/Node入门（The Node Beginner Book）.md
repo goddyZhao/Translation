@@ -16,9 +16,9 @@
 ### 读者对象
 本书最适合与我有相似技术背景的读者： 至少对一门诸如Ruby、Python、PHP或者Java这样面向对象的语言有一定的经验；对JavaScript处于初学阶段，并且完全是一个Node.js的新手。  
 
-这里指的适合对其他编程语言有一定经验的开发者，意思是说，本书不会对诸如数据类型、变量、控制结构等等之类的非常基础的概念做介绍。要读懂本书，这些基础的概念我都默认你已经会了。 
+这里指的适合对其他编程语言有一定经验的开发者，意思是说，本书不会对诸如数据类型、变量、控制结构等等之类非常基础的概念作介绍。要读懂本书，这些基础的概念我都默认你已经会了。 
 
-然而，本书还是会对JavaScript中的函数和对象做详细介绍，因为它们与其他同类编程语言中的函数和对象有很大的不同。  
+然而，本书还是会对JavaScript中的函数和对象作详细介绍，因为它们与其他同类编程语言中的函数和对象有很大的不同。  
 
 
 <a name="structure"></a>
@@ -32,7 +32,7 @@
 
 紧接着，会带领大家完成一个最传统的“Hello World”应用，这也是最基础的Node.js应用。  
 
-最后，会和大家讨论如何设计一个“真正”完整的应用，剖析要完成该应用需要实现的不同模块，并开始一步一步介绍如何来实现这些模块。  
+最后，会和大家讨论如何设计一个“真正”完整的应用，剖析要完成该应用需要实现的不同模块，并一步一步介绍如何来实现这些模块。  
 
 可以确保的是，在这过程中，大家会学到JavaScript中一些高级的概念、如何使用它们以及为什么使用这些概念就可以实现而其他编程语言中同类的概念就无法实现。  
 
@@ -80,15 +80,15 @@
 
 如果你和我一样，那么你很早就开始利用HTML进行“开发”，正因如此，你接触到了叫JavaScript有趣的东西，而对于JavaScript，你只会基本的操作——为web页面添加交互。  
 
-而你真正想要的是“干货”，你想要知道如何构建复杂的web站点 —— 于是，你学习了一种诸如PHP，Ruby，Java之类的编程语言，并开始书写“后端”代码。  
+而你真正想要的是“干货”，你想要知道如何构建复杂的web站点 —— 于是，你学习了一种诸如PHP、Ruby、Java这样的编程语言，并开始书写“后端”代码。  
 
-然而，你始终还在关注着JavaScript，随着通过一些对jQuery，Prototype之类技术的介绍，你慢慢了解到了很多JavaScript中的进阶技能，同时也感受到了JavaScript绝非仅仅是 _window.open()_ 那么简单。  
+与此同时，你还始终关注着JavaScript，随着通过一些对jQuery，Prototype之类技术的介绍，你慢慢了解到了很多JavaScript中的进阶技能，同时也感受到了JavaScript绝非仅仅是 _window.open()_ 那么简单。  
 
-不过，这些毕竟都是前端技术，尽管当你想要增强页面的时候，使用jQuery总让你觉得很爽，但是，最终，你顶多是个JavaScript用户，而非JavaScript开发者。  
+不过，这些毕竟都是前端技术，尽管当想要增强页面的时候，使用jQuery总让你觉得很爽，但到最后，你顶多是个JavaScript用户，而非JavaScript开发者。  
 
-然后，出现了Node.js，服务端的JavaScript, 这会有多酷啊？  
+然后，出现了Node.js，服务端的JavaScript, 这有多酷啊？  
 
-于是，你决定，是时候重新拾起这个既熟悉又陌生的JavaScript了。但是别急，写Node.js应用是一件事情；理解为什么它们要以它们书写的这种方式来书写则意味着——你要懂JavaScript。这次是玩真的了。  
+于是，你觉得是时候该重新拾起既熟悉又陌生的JavaScript了。但是别急，写Node.js应用是一件事情；理解为什么它们要以它们书写的这种方式来书写则意味着——你要懂JavaScript。这次是玩真的了。  
 
 问题来了： 由于JavaScript真正意义上以两种，甚至可以说是三种形态存在（从中世纪90年代的作为对DHTML进行增强的小玩具，到像jQuery那样严格意义上的前端技术，一直到现在的服务端技术），
 因此，很难找到一个“正确”的方式来学习JavaScript，使得让你书写Node.js应用的时候感觉自己是在真正开发它而不仅仅是使用它。  
@@ -158,7 +158,7 @@ Node.js事实上就是另外一种上下文，它允许在后端（脱离浏览�
 
 很好。不过现在要是请求处理程序能够向浏览器返回一些有意义的信息而并非全是“Hello World”，那就更好了。  
 
-这里要记住的是，浏览器发出请求后获得并显示的“Hello World”信息仍是来自于我们server.js文件中的 _onRequst_ 函数。  
+这里要记住的是，浏览器发出请求后获得并显示的“Hello World”信息仍是来自于我们server.js文件中的 _onRequest_ 函数。  
 
 其实“处理请求”说白了就是“对请求作出响应”，因此，我们需要让请求处理程序能够像 _onRequest_ 函数那样可以和浏览器进行“对话”。  
 
@@ -198,7 +198,7 @@ exports.upload = upload;</code></pre>
 
 exports.route = route;</code></pre>
 
-正如上述代码所示，当请求如何路由的时候，我们也返回了一些相关的错误信息。  
+正如上述代码所示，当请求无法路由的时候，我们也返回了一些相关的错误信息。  
 
 最后，我们需要对我们的server.js进行重构以使得它能够将请求处理程序通过请求路由返回的内容响应给浏览器，如下所示：  
 <pre><code>var http = require("http");
@@ -225,7 +225,7 @@ exports.start = start;</code></pre>
 
 好，那么问题在哪里呢？简单的说就是： 当未来有请求处理程序需要进行非阻塞的操作的时候，我们的应用就“挂”了。  
 
-没理解？没关系，那就来详细解释下。  
+没理解？没关系，下面就来详细解释下。  
 
 
 <a name="blocking-and-non-blocking"></a>
@@ -269,7 +269,7 @@ exports.upload = upload;</code></pre>
 
 在第二个浏览器窗口的地址栏中输入http://localhost:8888/upload， 同样的，先不要打开它！  
 
-接下来，作如下操作：在第一个窗口中（“/start”）按下回车，然后快速切换到第二个窗口中（“/upload”）按下回车。  
+接下来，做如下操作：在第一个窗口中（“/start”）按下回车，然后快速切换到第二个窗口中（“/upload”）按下回车。  
 
 注意，发生了什么： /start URL加载花了10秒，这和我们预期的一样。但是，/upload URL居然也花了10秒，而它在对应的请求处理程序中并没有类似于 _sleep()_ 这样的操作！  
 
@@ -318,7 +318,7 @@ exec()做了什么呢？它从Node.js来执行一个shell命令。在上述例�
 
 上述代码是非常直观的： 创建了一个新的变量 _content_ （初始值为“empty”），执行“ls -lah”命令，将结果赋值给content，最后将content返回。  
 
-和往常一样，我们启动服务器，然后访问“http://localhost:8888/start” 。  
+和往常一样，我们启动服务器，然后访问“ http://localhost:8888/start ” 。  
 
 之后会载入一个漂亮的web页面，其内容为“empty”。怎么回事？  
 
@@ -353,7 +353,7 @@ exec()做了什么呢？它从Node.js来执行一个shell命令。在上述例�
 #### 以非阻塞操作进行请求响应  
 我刚刚提到了这样一个短语 —— “正确的方式”。而事实上通常“正确的方式”一般都不简单。  
 
-而用Node.js就有这样一种实现方案： 函数传递。下面就让我们来具体看看如何实现。  
+不过，用Node.js就有这样一种实现方案： 函数传递。下面就让我们来具体看看如何实现。  
 
 到目前为止，我们的应用已经可以通过应用各层之间传递值的方式（请求处理程序 -> 请求路由 -> 服务器）将请求处理程序返回的内容（请求处理程序最终要显示给用户的内容）传递给HTTP服务器。  
 
@@ -363,7 +363,7 @@ exec()做了什么呢？它从Node.js来执行一个shell命令。在上述例�
 
 原理就是如此，接下来让我们来一步步实现这种方案。  
 
-让我们从 _server.js_ 开始：  
+先从 _server.js_ 开始：  
 <pre><code>var http = require("http");
 var url = require("url");
 
@@ -381,7 +381,7 @@ function start(route, handle) {
 
 exports.start = start;</code></pre>
 
-相对此前从 _route()_ 函数获取返回值的做法，这次我们将response对象作为第三个参数传递给route()函数，并且，我们将onRequest()处理程序中所有有关response的函数调用就移除，因为我们希望这部分工作让route()函数来完成。  
+相对此前从 _route()_ 函数获取返回值的做法，这次我们将response对象作为第三个参数传递给route()函数，并且，我们将onRequest()处理程序中所有有关response的函数调都移除，因为我们希望这部分工作让route()函数来完成。  
 
 下面就来看看我们的 _router.js_ ：  
 <pre><code>function route(handle, pathname, response) {
@@ -427,7 +427,7 @@ exports.upload = upload;</code></pre>
 
 我们的处理程序函数需要接收response参数，为了对请求作出直接的响应。  
 
-_start_ 处理程序在exec()的匿名回调函数中作请求响应的操作，而 _upload_ 处理程序仍然是简单的回复“Hello World”，只是这次是使用response对象而已。  
+_start_ 处理程序在exec()的匿名回调函数中做请求响应的操作，而 _upload_ 处理程序仍然是简单的回复“Hello World”，只是这次是使用response对象而已。  
 
 这时再次我们启动应用（node index.js），一切都会工作的很好。  
 
@@ -482,18 +482,18 @@ exports.upload = upload;</code></pre>
 <pre><code>function start(response) {
   console.log("Request handler 'start' was called.");
 
-  var body = '<html>'+
-    '<head>'+
-    '<meta http-equiv="Content-Type" content="text/html; '+
-    'charset=UTF-8" />'+
-    '</head>'+
-    '<body>'+
-    '<form action="/upload" method="post">'+
-    '<textarea name="text" rows="20" cols="60"></textarea>'+
-    '<input type="submit" value="Submit text" />'+
-    '</form>'+
-    '</body>'+
-    '</html>';
+  var body = '&lt;html&gt;'+
+    '&lt;head&gt;'+
+    '&lt;meta http-equiv="Content-Type" content="text/html; '+
+    'charset=UTF-8" /&gt;'+
+    '&lt;/head&gt;'+
+    '&lt;body&gt;'+
+    '&lt;form action="/upload" method="post"&gt;'+
+    '&lt;textarea name="text" rows="20" cols="60"&gt;&lt;/textarea&gt;'+
+    '&lt;input type="submit" value="Submit text" /&gt;'+
+    '&lt;/form&gt;'+
+    '&lt;/body&gt;'+
+    '&lt;/html&gt;';
 
     response.writeHead(200, {"Content-Type": "text/html"});
     response.write(body);
@@ -598,18 +598,18 @@ exports.route = route;</code></pre>
 <pre><code>function start(response, postData) {
   console.log("Request handler 'start' was called.");
 
-  var body = '<html>'+
-    '<head>'+
-    '<meta http-equiv="Content-Type" content="text/html; '+
-    'charset=UTF-8" />'+
-    '</head>'+
-    '<body>'+
-    '<form action="/upload" method="post">'+
-    '<textarea name="text" rows="20" cols="60"></textarea>'+
-    '<input type="submit" value="Submit text" />'+
-    '</form>'+
-    '</body>'+
-    '</html>';
+  var body = '&lt;html&gt;'+
+    '&lt;head&gt;'+
+    '&lt;meta http-equiv="Content-Type" content="text/html; '+
+    'charset=UTF-8" /&gt;'+
+    '&lt;/head&gt;'+
+    '&lt;body&gt;'+
+    '&lt;form action="/upload" method="post"&gt;'+
+    '&lt;textarea name="text" rows="20" cols="60"&gt;&lt;/textarea&gt;'+
+    '&lt;input type="submit" value="Submit text" /&gt;'+
+    '&lt;/form&gt;'+
+    '&lt;/body&gt;'+
+    '&lt;/html&gt;';
 
     response.writeHead(200, {"Content-Type": "text/html"});
     response.write(body);
@@ -637,18 +637,18 @@ exports.upload = upload;</code></pre>
 function start(response, postData) {
   console.log("Request handler 'start' was called.");
 
-  var body = '<html>'+
-    '<head>'+
-    '<meta http-equiv="Content-Type" content="text/html; '+
-    'charset=UTF-8" />'+
-    '</head>'+
-    '<body>'+
-    '<form action="/upload" method="post">'+
-    '<textarea name="text" rows="20" cols="60"></textarea>'+
-    '<input type="submit" value="Submit text" />'+
-    '</form>'+
-    '</body>'+
-    '</html>';
+  var body = '&lt;html&gt;'+
+    '&lt;head&gt;'+
+    '&lt;meta http-equiv="Content-Type" content="text/html; '+
+    'charset=UTF-8" /&gt;'+
+    '&lt;/head&gt;'+
+    '&lt;body&gt;'+
+    '&lt;form action="/upload" method="post"&gt;'+
+    '&lt;textarea name="text" rows="20" cols="60"&gt;&lt;/textarea&gt;'+
+    '&lt;input type="submit" value="Submit text" /&gt;'+
+    '&lt;/form&gt;'+
+    '&lt;/body&gt;'+
+    '&lt;/html&gt;';
 
     response.writeHead(200, {"Content-Type": "text/html"});
     response.write(body);
@@ -712,12 +712,12 @@ http.createServer(function(req, res) {
   // 显示一个文件上传表单
   res.writeHead(200, {'content-type': 'text/html'});
   res.end(
-    '<form action="/upload" enctype="multipart/form-data" '+
-    'method="post">'+
-    '<input type="text" name="title"><br>'+
-    '<input type="file" name="upload" multiple="multiple"><br>'+
-    '<input type="submit" value="Upload">'+
-    '</form>'
+    '&lt;form action="/upload" enctype="multipart/form-data" '+
+    'method="post"&gt;'+
+    '&lt;input type="text" name="title"&gt;&lt;br&gt;'+
+    '&lt;input type="file" name="upload" multiple="multiple"&gt;&lt;br&gt;'+
+    '&lt;input type="submit" value="Upload"&gt;'+
+    '&lt;/form&gt;'
   );
 }).listen(8888);</code></pre>
 
@@ -752,18 +752,18 @@ http.createServer(function(req, res) {
 function start(response, postData) {
   console.log("Request handler 'start' was called.");
 
-  var body = '<html>'+
-    '<head>'+
-    '<meta http-equiv="Content-Type" '+
-    'content="text/html; charset=UTF-8" />'+
-    '</head>'+
-    '<body>'+
-    '<form action="/upload" method="post">'+
-    '<textarea name="text" rows="20" cols="60"></textarea>'+
-    '<input type="submit" value="Submit text" />'+
-    '</form>'+
-    '</body>'+
-    '</html>';
+  var body = '&lt;html&gt;'+
+    '&lt;head&gt;'+
+    '&lt;meta http-equiv="Content-Type" '+
+    'content="text/html; charset=UTF-8" /&gt;'+
+    '&lt;/head&gt;'+
+    '&lt;body&gt;'+
+    '&lt;form action="/upload" method="post"&gt;'+
+    '&lt;textarea name="text" rows="20" cols="60"&gt;&lt;/textarea&gt;'+
+    '&lt;input type="submit" value="Submit text" /&gt;'+
+    '&lt;/form&gt;'+
+    '&lt;/body&gt;'+
+    '&lt;/html&gt;';
 
     response.writeHead(200, {"Content-Type": "text/html"});
     response.write(body);
@@ -826,19 +826,19 @@ server.start(router.route, handle);</code></pre>
 function start(response, postData) {
   console.log("Request handler 'start' was called.");
 
-  var body = '<html>'+
-    '<head>'+
-    '<meta http-equiv="Content-Type" '+
-    'content="text/html; charset=UTF-8" />'+
-    '</head>'+
-    '<body>'+
-    '<form action="/upload" enctype="multipart/form-data" '+
-    'method="post">'+
-    '<input type="file" name="upload">'+
-    '<input type="submit" value="Upload file" />'+
-    '</form>'+
-    '</body>'+
-    '</html>';
+  var body = '&lt;html&gt;'+
+    '&lt;head&gt;'+
+    '&lt;meta http-equiv="Content-Type" '+
+    'content="text/html; charset=UTF-8" /&gt;'+
+    '&lt;/head&gt;'+
+    '&lt;body&gt;'+
+    '&lt;form action="/upload" enctype="multipart/form-data" '+
+    'method="post"&gt;'+
+    '&lt;input type="file" name="upload"&gt;'+
+    '&lt;input type="submit" value="Upload file" /&gt;'+
+    '&lt;/form&gt;'+
+    '&lt;/body&gt;'+
+    '&lt;/html&gt;';
 
     response.writeHead(200, {"Content-Type": "text/html"});
     response.write(body);
@@ -927,19 +927,19 @@ exports.route = route;</code></pre>
 function start(response) {
   console.log("Request handler 'start' was called.");
 
-  var body = '<html>'+
-    '<head>'+
-    '<meta http-equiv="Content-Type" content="text/html; '+
-    'charset=UTF-8" />'+
-    '</head>'+
-    '<body>'+
-    '<form action="/upload" enctype="multipart/form-data" '+
-    'method="post">'+
-    '<input type="file" name="upload" multiple="multiple">'+
-    '<input type="submit" value="Upload file" />'+
-    '</form>'+
-    '</body>'+
-    '</html>';
+  var body = '&lt;html&gt;'+
+    '&lt;head&gt;'+
+    '&lt;meta http-equiv="Content-Type" content="text/html; '+
+    'charset=UTF-8" /&gt;'+
+    '&lt;/head&gt;'+
+    '&lt;body&gt;'+
+    '&lt;form action="/upload" enctype="multipart/form-data" '+
+    'method="post"&gt;'+
+    '&lt;input type="file" name="upload" multiple="multiple"&gt;'+
+    '&lt;input type="submit" value="Upload file" /&gt;'+
+    '&lt;/form&gt;'+
+    '&lt;/body&gt;'+
+    '&lt;/html&gt;';
 
     response.writeHead(200, {"Content-Type": "text/html"});
     response.write(body);
@@ -955,8 +955,8 @@ function upload(response, request) {
     console.log("parsing done");
     fs.renameSync(files.upload.path, "/tmp/test.png");
     response.writeHead(200, {"Content-Type": "text/html"});
-    response.write("received image:<br/>");
-    response.write("<img src='/show' />");
+    response.write("received image:&lt;br/&gt;");
+    response.write("&lt;img src='/show' /gt;");
     response.end();
   });
 }
