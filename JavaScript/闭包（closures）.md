@@ -368,7 +368,7 @@ data[2].[[Scope]] === [
 然而，上述提到的方法并不是唯一的方法。通过其他方式也可以获得正确的“k”的值，如下所示：  
 <pre><code>var data = [];
  
-for (var k = 0; k < 3; k++) {
+for (var k = 0; k &lt; 3; k++) {
   (data[k] = function () {
     alert(arguments.callee.x);
   }).x = k; // 将“k”存储为函数的一个属性
