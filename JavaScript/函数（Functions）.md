@@ -1,7 +1,7 @@
 说明
 --------
 * * *
-此文译自[Dmitry A.Soshnikov](http://dmitrysoshnikov.com/) 的文章[Scope Chain](http://dmitrysoshnikov.com/ecmascript/chapter-5-functions/)    
+此文译自[Dmitry A.Soshnikov](http://dmitrysoshnikov.com/) 的文章[Functions](http://dmitrysoshnikov.com/ecmascript/chapter-5-functions/)    
 
 
 概要
@@ -560,14 +560,14 @@ function foo() {
 这个时候，实现的时候就可以采用联合对象的机制了。这样，最终所有的数组元素都会引用同一个函数（只有一个函数）：  
 <pre><code>var a = [];
  
-for (var k = 0; k < 100; k++) {
+for (var k = 0; k &lt; 100; k++) {
   a[k] = function () {}; // 这里就可以使用联合对象
 }</code></pre>
 
 但是，通过Function构造器创建的函数就无法使用联合对象了：  
 <pre><code>var a = [];
  
-for (var k = 0; k < 100; k++) {
+for (var k = 0; k $lt; 100; k++) {
   a[k] = Function(''); // 只能是100个不同的函数
 }</code></pre>
 
@@ -603,7 +603,7 @@ F.[[Prototype]] = Function.prototype
 // 对函数自身引用
 // [[Call]] 在函数调用时F()激活
 // 同时创建一个新的执行上下文
-F.[[Call]] = <reference to function>
+F.[[Call]] = &lt;reference to function&gt;
  
 // 内置的构造器
 // [[Construct]] 会在使用“new”关键字的时候激活
