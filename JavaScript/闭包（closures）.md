@@ -231,8 +231,8 @@ function foo() {
 }
  
 // foo is a closure
-foo: <FunctionObject> = {
-  [[Call]]: <code block of foo>,
+foo: &lt;FunctionObject&gt; = {
+  [[Call]]: &lt;code block of foo&gt;,
   [[Scope]]: [
     global: {
       x: 10
@@ -297,7 +297,7 @@ alert(secondClosure()); // 3</code></pre>
 正因为这个特性，很多人都会犯一个非常常见的错误： 当在循环中创建了函数，然后将循环的索引值和每个函数绑定的时候，通常得到的结果不是预期的（预期是希望每个函数都能够获取各自对应的索引值）。  
 <pre><code>var data = [];
  
-for (var k = 0; k < 3; k++) {
+for (var k = 0; k &lt; 3; k++) {
   data[k] = function () {
     alert(k);
   };
@@ -324,7 +324,7 @@ data[2].[[Scope]] === Scope;</code></pre>
 如下所示，创建一个额外的闭包就可以解决这个问题了：  
 <pre><code>var data = [];
  
-for (var k = 0; k < 3; k++) {
+for (var k = 0; k &lt; 3; k++) {
   data[k] = (function _helper(x) {
     return function () {
       alert(x);
